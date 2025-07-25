@@ -36,8 +36,8 @@ func main()
      test_tools()
 func test_tools()
     see "=== اختبار الأدوات مباشرة ===" + nl
-    
-    load "src/agent_tools.ring"
+
+    # Use the AgentTools instance from the main agent
     oTools = new AgentTools()
     
     # اختبار كتابة ملف

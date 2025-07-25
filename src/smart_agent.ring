@@ -4,7 +4,7 @@
 
 load "ai_client.ring"
 load "context_engine.ring"
-//load "agent_tools.ring"
+load "agent_tools.ring"
 load "jsonlib.ring"
 load "stdlib.ring"
 

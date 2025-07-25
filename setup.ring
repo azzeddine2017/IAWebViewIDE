@@ -19,6 +19,9 @@ func main()
     
     see nl + "=== تم الإعداد بنجاح! ===" + nl
     see "يمكنك الآن تشغيل: ring main.ring" + nl
+    # تشغيل الإعداد
+
+    showNextSteps()
 
 func checkRequirements()
     see "🔍 التحقق من المتطلبات..." + nl
@@ -161,6 +164,4 @@ func showNextSteps()
     see "3. شغل التطبيق الكامل: ring main.ring" + nl
     see "4. راجع ملف QUICK_START.md للمزيد من التفاصيل" + nl
 
-# تشغيل الإعداد
-main()
-showNextSteps()
+

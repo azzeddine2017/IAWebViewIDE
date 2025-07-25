@@ -7,6 +7,8 @@ load "jsonlib.ring"
 load "stdlib.ring"
 load "src/smart_agent.ring"
 load "src/ui_generator.ring"
+load "src/file_manager.ring"
+load "src/code_runner.ring"
 
 # ===================================================================
 # Main Application Class
@@ -17,6 +19,8 @@ class RingIDE
     oWebView = NULL
     oSmartAgent = NULL
     oUIGenerator = NULL
+    oFileManager = NULL
+    oCodeRunner = NULL
     cCurrentProject = ""
     
     # ===================================================================
@@ -28,8 +32,10 @@ class RingIDE
         # Initialize components
         oSmartAgent = new SmartAgent()
         oUIGenerator = new UIGenerator()
+        oFileManager = new FileManager()
+        oCodeRunner = new CodeRunner()
 
-        see "Smart Agent and UI components initialized successfully." + nl
+        see "All components initialized successfully." + nl
     
     # ===================================================================
     # Start Application

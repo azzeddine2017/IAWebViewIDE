@@ -71,12 +71,12 @@ class AgentTools
     # Create Tool Definition
     # ===================================================================
     func createTool(cName, cDescription, aParameters, cCategory)
-        return [
-            "name" = cName,
-            "description" = cDescription,
-            "parameters" = aParameters,
-            "category" = cCategory
-        ]
+        oTool = new stdclass
+        oTool.name = cName
+        oTool.description = cDescription
+        oTool.parameters = aParameters
+        oTool.category = cCategory
+        return oTool
     
     # ===================================================================
     # Execute Tool
@@ -556,12 +556,12 @@ class AgentTools
 
         cCurrentCategory = ""
         for oTool in aAvailableTools
-            if oTool["category"] != cCurrentCategory
-                cCurrentCategory = oTool["category"]
+            if oTool.category != cCurrentCategory
+                cCurrentCategory = oTool.category
                 cToolsList += "=== " + cCurrentCategory + " ===" + nl
             ok
 
-            cToolsList += "• " + oTool["name"] + ": " + oTool["description"] + nl
+            cToolsList += "• " + oTool.name + ": " + oTool.description + nl
         next
 
         return cToolsList
