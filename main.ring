@@ -5,6 +5,8 @@
 
 # Load required libraries
 load "webview.ring"
+load "stdlib.ring"
+# تحميل التطبيق الرئيسي
 load "src/app.ring"
 
 # ===================================================================
@@ -15,7 +17,8 @@ func main()
     
     # Create and start the application
     oApp = new RingIDE()
-    oApp.start()
+    oApp.init()  # تهيئة المكونات أولاً
+    oApp.start() # ثم بدء التطبيق
     
     see "Ring Programming IDE closed." + nl
 
