@@ -27,8 +27,8 @@ class FileManager
     func saveFile(id, req, oWebView)
         try
             aParams = json2list(req)
-            cFileName = aParams[1]
-            cContent = aParams[2]
+            cFileName = aParams[1][1]
+            cContent = aParams[1][2]
             
             # Save file
             cFilePath = cFilesDirectory + "/" + cFileName
@@ -53,7 +53,7 @@ class FileManager
     func loadFile(id, req, oWebView)
         try
             aParams = json2list(req)
-            cFileName = aParams[1]
+            cFileName = aParams[1][1]
             cFilePath = cFilesDirectory + "/" + cFileName
             
             if fexists(cFilePath)
@@ -79,7 +79,7 @@ class FileManager
        see "Creating new file..." + nl
        ? req
             aParams = json2list(req)
-            cFileName = aParams[1]
+            cFileName = aParams[1][1]
             ? type(cFileName) ? list2code(cFileName)
             cFilePath = cFilesDirectory + "/" + cFileName
             
@@ -106,7 +106,7 @@ class FileManager
     func deleteFile(id, req, oWebView)
         try
             aParams = json2list(req)
-            cFileName = aParams[1]
+            cFileName = aParams[1][1]
             cFilePath = cFilesDirectory + "/" + cFileName
             
             if fexists(cFilePath)

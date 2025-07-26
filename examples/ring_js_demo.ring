@@ -14,22 +14,7 @@ oWebView.injectJS(`
     console.log('Ring WebView initialized with version:', window.ringVersion);
 `)
 
-# دالة Ring للترحيب
-func greet(id, req)
-    see "Received request from JavaScript" + nl
-    aArgs = json2list(req)
-    cName = aArgs[1]
-    
-    # تحديث واجهة المستخدم من Ring
-    oWebView.evalJS("document.getElementById('response').innerText = 'Ring says: مرحباً يا " + cName + "!';")
-    
-    # إرجاع رد إلى JavaScript
-    oWebView.wreturn(id, WEBVIEW_ERROR_OK, '"تم استلام التحية!"')
-
-# دالة Ring تعمل في الخلفية
-func updateStatus()
-    oWebView.evalJS("document.getElementById('status').innerText = 'تم التحديث في: " + time() + "';")
-
+#
 oWebView {
     setTitle("مثال على الربط بين Ring و JavaScript")
     setSize(800, 600, WEBVIEW_HINT_NONE)
@@ -88,6 +73,22 @@ oWebView {
     see "Starting update thread..." + nl
     dispatch("updateStatus()")
 }
-
 # تشغيل الحلقة الرئيسية
 oWebView.run()
+
+ دالة Ring للترحيب
+func greet(id, req)
+    see "Received request from JavaScript" + nl
+    aArgs = json2list(req)
+    cName = aArgs[1][1]
+    ? type(cName) # التحقق من الاسم
+    see "Received name: " + cName + nl
+    # تحديث واجهة المستخدم من Ring
+    oWebView.evalJS("document.getElementById('response').innerText = 'Ring says: مرحباً يا " + cName + "!';")
+    
+    # إرجاع رد إلى JavaScript
+    oWebView.wreturn(id, WEBVIEW_ERROR_OK, '"تم استلام التحية!"')
+
+# دالة Ring تعمل في الخلفية
+func updateStatus()
+    oWebView.evalJS("document.getElementById('status').innerText = 'تم التحديث في: " + time() + "';")

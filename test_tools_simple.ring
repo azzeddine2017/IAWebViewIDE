@@ -12,7 +12,7 @@ func main()
     for i = 1 to 3
         if i <= len(oTools.aAvailableTools)
             oTool = oTools.aAvailableTools[i]
-            see "الأداة " + i + ":" + nl
+            //see "الأداة " + i + ":" + nl
             see "  الاسم: " + oTool["name"] + nl
             see "  الوصف: " + oTool["description"] + nl
             see "  الفئة: " + oTool["category"] + nl

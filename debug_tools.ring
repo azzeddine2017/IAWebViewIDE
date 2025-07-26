@@ -13,9 +13,9 @@ func main()
         if i <= len(oTools.aAvailableTools)
             oTool = oTools.aAvailableTools[i]
             see "Tool " + i + ":" + nl
-            see "  Name: '" + oTool["name"] + "'" + nl
-            see "  Description: '" + oTool["description"] + "'" + nl
-            see "  Category: '" + oTool["category"] + "'" + nl
+            see "  Name: '" + oTool.name + "'" + nl
+            see "  Description: '" + oTool.description + "'" + nl
+            see "  Category: '" + oTool.category + "'" + nl
             see nl
         ok
     next

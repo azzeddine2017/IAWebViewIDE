@@ -1,9 +1,10 @@
+load "src/agent_tools.ring"
 # Simple Test for Agent Tools
 see "=== اختبار بسيط للوكيل الذكي ===" + nl
 
 # Test basic functionality
-try
-    load "src/agent_tools.ring"
+//try
+    
     see "✓ تم تحميل agent_tools.ring بنجاح" + nl
     
     oTools = new AgentTools()
@@ -25,8 +26,8 @@ try
         see "✗ فشل في قراءة الملف: " + oResult["error"] + nl
     ok
     
-catch
+/*catch
     see "✗ خطأ في الاختبار: " + cCatchError + nl
-done
+done*/
 
 see "=== انتهى الاختبار ===" + nl

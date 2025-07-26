@@ -9,7 +9,7 @@ func main()
 
    
     see "=== اختبار الوكيل الذكي ===" + nl + nl
-    
+     
     # إنشاء الوكيل الذكي
     oAgent = new SmartAgent()
     
@@ -41,7 +41,7 @@ func test_tools()
     oTools = new AgentTools()
     
     # اختبار كتابة ملف
-    aParams = ['test_output.ring', 'see \"Hello from Agent!\" + nl']
+    aParams = ['test_output.ring', 'see "Hello from Agent!" + nl']
     oResult = oTools.executeTool("write_file", aParams)
     
     if oResult["success"]

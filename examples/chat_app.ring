@@ -9,21 +9,6 @@ load "stdlib.ring"
 # تهيئة WebView مع الربط بين Ring و JavaScript
 oWebView = new WebView()
 
-# تعريف الدوال التي سيتم ربطها مع JavaScript
-func sendMessage(id, req)
-    try
-        aParams = json2list(req)
-        cMessage = aParams[1]
-        
-        # هنا يمكنك معالجة الرسالة (مثلاً إرسالها للذكاء الاصطناعي)
-        cResponse = "مرحباً! تلقيت رسالتك: " + cMessage
-        
-        # إرجاع الرد إلى JavaScript
-        oWebView.wreturn(id, WEBVIEW_ERROR_OK, '"' + cResponse + '"')
-        
-    catch
-        oWebView.wreturn(id, WEBVIEW_ERROR_OK, '"حدث خطأ في معالجة الرسالة"')
-    done
 
 # تهيئة النافذة وربط الدوال
 oWebView {
@@ -31,7 +16,7 @@ oWebView {
     setSize(800, 600, WEBVIEW_HINT_NONE)
     
     # ربط دالة Ring مع JavaScript
-    bind("sendMessage", "sendMessage")
+    bind("sendMessage", :sendMessage)
     
     # تعيين محتوى HTML
     setHtml(`
@@ -153,3 +138,18 @@ oWebView {
     
     run()
 }
+# تعريف الدوال التي سيتم ربطها مع JavaScript
+func sendMessage(id, req)
+    try
+        aParams = json2list(req)
+        cMessage = aParams[1][1]
+        
+        # هنا يمكنك معالجة الرسالة (مثلاً إرسالها للذكاء الاصطناعي)
+        cResponse = "مرحباً! تلقيت رسالتك: " + cMessage
+        
+        # إرجاع الرد إلى JavaScript
+        oWebView.wreturn(id, WEBVIEW_ERROR_OK, '"' + cResponse + '"')
+        
+    catch
+        oWebView.wreturn(id, WEBVIEW_ERROR_OK, '"حدث خطأ في معالجة الرسالة"')
+    done

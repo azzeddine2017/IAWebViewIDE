@@ -149,7 +149,7 @@ class AgentTools
         try
             if fexists(cFileName)
                 cContent = read(cFileName)
-                return createSuccessResult("File content:\n" + cContent)
+                return createSuccessResult("File content:" + nl + cContent)
             else
                 return createErrorResult("File not found: " + cFileName)
             ok
@@ -182,7 +182,7 @@ class AgentTools
                 cCommand = "ls " + cDirectory
             ok
             
-            cResult = system(cCommand)
+            cResult = systemcmd(cCommand)
             return createSuccessResult("Files in " + cDirectory + ":\n" + cResult)
             
         catch
@@ -212,8 +212,8 @@ class AgentTools
             
             # Execute the code
             cCommand = "ring " + cTempFile
-            cResult = system(cCommand)
-            
+            cResult = systemcmd(cCommand)
+
             # Clean up
             if fexists(cTempFile)
                 remove(cTempFile)
@@ -343,19 +343,20 @@ class AgentTools
     # Utility Functions
     # ===================================================================
     func createSuccessResult(cMessage)
+        
         return [
-            "success" = true,
-            "message" = cMessage,
-            "error" = ""
+            :success = true,
+            :message = cMessage,
+            :error = ""
         ]
-    
+
     func createErrorResult(cError)
         return [
-            "success" = false,
-            "message" = "",
-            "error" = cError
+            :success = false,
+            :message = "",
+            :error = cError
         ]
-    
+
     func substr_count(cString, cSubString)
         nCount = 0
         nPos = 1
@@ -433,7 +434,7 @@ class AgentTools
                 cCommand = "find " + cProjectPath + " -type f"
             ok
 
-            cFileList = system(cCommand)
+            cFileList = systemcmd(cCommand)
             aFiles = str2list(cFileList)
 
             for cFile in aFiles
@@ -488,7 +489,7 @@ class AgentTools
 
     func gitStatus()
         try
-            cResult = system("git status")
+            cResult = systemcmd("git status")
             return createSuccessResult("Git status:\n" + cResult)
         catch
             return createErrorResult("Git status failed: " + cCatchError)
@@ -497,7 +498,7 @@ class AgentTools
     func gitAdd(cFiles)
         try
             cCommand = "git add " + cFiles
-            cResult = system(cCommand)
+            cResult = systemcmd(cCommand)
             return createSuccessResult("Files added to Git:\n" + cResult)
         catch
             return createErrorResult("Git add failed: " + cCatchError)
@@ -506,7 +507,7 @@ class AgentTools
     func gitCommit(cMessage)
         try
             cCommand = 'git commit -m "' + cMessage + '"'
-            cResult = system(cCommand)
+            cResult = systemcmd(cCommand)
             return createSuccessResult("Git commit completed:\n" + cResult)
         catch
             return createErrorResult("Git commit failed: " + cCatchError)
@@ -517,7 +518,7 @@ class AgentTools
     # ===================================================================
     func executeCommand(cCommand)
         try
-            cResult = system(cCommand)
+            cResult = systemcmd(cCommand)
             return createSuccessResult("Command executed:\n" + cResult)
         catch
             return createErrorResult("Command execution failed: " + cCatchError)
@@ -536,7 +537,7 @@ class AgentTools
                 cCommand = 'grep -r "' + cSearchTerm + '" ' + cDirectory
             ok
 
-            cResult = system(cCommand)
+            cResult = systemcmd(cCommand)
 
             if len(cResult) > 0
                 return createSuccessResult("Search results for '" + cSearchTerm + "':\n" + cResult)
@@ -573,7 +574,7 @@ class AgentTools
         # Find tool definition
         oTool = null
         for oToolDef in aAvailableTools
-            if oToolDef["name"] = cToolName
+            if oToolDef.name = cToolName
                 oTool = oToolDef
                 exit
             ok
@@ -584,7 +585,7 @@ class AgentTools
         ok
 
         # Check parameter count
-        aRequiredParams = oTool["parameters"]
+        aRequiredParams = oTool.parameters
         if len(aParameters) != len(aRequiredParams)
             return [false, "Expected " + len(aRequiredParams) + " parameters, got " + len(aParameters)]
         ok
@@ -596,3 +597,4 @@ class stdclass
     description
     parameters
     category
+    

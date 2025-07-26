@@ -40,7 +40,7 @@ class SmartAgent
     # Process User Request
     # ===================================================================
     func processRequest(cUserMessage, cCurrentCode)
-        try
+       // try
             # Add user message to context
             oContextEngine.addToHistory("user", cUserMessage, "chat")
             
@@ -58,9 +58,9 @@ class SmartAgent
                 return sendToAI(cUserMessage, cRequestType, cCurrentCode)
             ok
             
-        catch
+      /*  catch
             return createErrorResponse("Request processing failed: " + cCatchError)
-        done
+        done*/
     
     # ===================================================================
     # Analyze Request Type

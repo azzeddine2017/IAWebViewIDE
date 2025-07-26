@@ -5,7 +5,7 @@
 func main()
     see "=== اختبار بسيط للأدوات ===" + nl + nl
     
-    try
+    //try
         load "src/agent_tools.ring"
         see "✓ تم تحميل agent_tools.ring بنجاح" + nl
         
@@ -13,7 +13,7 @@ func main()
         see "✓ تم إنشاء كائن AgentTools بنجاح" + nl
         
         # اختبار كتابة ملف
-        aParams = ["test_hello.ring", "see \"Hello World!\" + nl"]
+        aParams = ["test_hello.ring", "see 'Hello World!' + nl"]
         oResult = oTools.executeTool("write_file", aParams)
         
         if oResult["success"]
@@ -33,7 +33,7 @@ func main()
         ok
         
         # اختبار تشغيل الكود
-        cTestCode = "see \"Hello from Ring Agent!\" + nl"
+        cTestCode = "see 'Hello from Ring Agent!' + nl"
         aParams = [cTestCode]
         oResult = oTools.executeTool("run_ring_code", aParams)
         
@@ -43,11 +43,8 @@ func main()
             see "✗ خطأ في تشغيل الكود: " + oResult["error"] + nl
         ok
         
-    catch
+    /*catch
         see "✗ خطأ في الاختبار: " + cCatchError + nl
     done
-    
+    */
     see nl + "=== انتهى الاختبار ===" + nl
-
-# تشغيل الاختبار
-main()

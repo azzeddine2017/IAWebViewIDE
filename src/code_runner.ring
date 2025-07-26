@@ -26,7 +26,7 @@ class CodeRunner
     func runCode(id, req, oWebView)
         try
             aParams = json2list(req)
-            cCode = aParams[1]
+            cCode = aParams[1][1]
             
             # Save code to temporary file
             cTempFile = cTempDirectory + "/temp_code.ring"
@@ -59,7 +59,7 @@ class CodeRunner
     func formatCode(id, req, oWebView)
         try
             aParams = json2list(req)
-            cCode = aParams[1]
+            cCode = aParams[1][1]
             
             # Basic code formatting for Ring
             cFormattedCode = formatRingCode(cCode)
@@ -79,7 +79,7 @@ class CodeRunner
     func analyzeCode(id, req, oWebView)
         try
             aParams = json2list(req)
-            cCode = aParams[1]
+            cCode = aParams[1][1]
             
             # Analyze Ring code
             cAnalysis = analyzeRingCode(cCode)
@@ -101,8 +101,8 @@ class CodeRunner
     func getCodeSuggestions(id, req, oWebView)
         try
             aParams = json2list(req)
-            cCode = aParams[1]
-            cCursor = aParams[2]
+            cCode = aParams[1][1]
+            cCursor = aParams[1][2]
             
             # Generate code suggestions
             aSuggestions = generateRingSuggestions(cCode, cCursor)
