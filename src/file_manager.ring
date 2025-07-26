@@ -75,9 +75,12 @@ class FileManager
     # Create New File
     # ===================================================================
     func createNewFile(id, req, oWebView)
-        try
+       // try
+       see "Creating new file..." + nl
+       ? req
             aParams = json2list(req)
             cFileName = aParams[1]
+            ? type(cFileName) ? list2code(cFileName)
             cFilePath = cFilesDirectory + "/" + cFileName
             
             # Create empty file if it doesn't exist
@@ -92,10 +95,10 @@ class FileManager
                 see "File already exists: " + cFileName + nl
             ok
             
-        catch
+       /* catch
             see "Error creating file: " + cCatchError + nl
             oWebView.wreturn(id, WEBVIEW_ERROR_OK, "false")
-        done
+        done*/
     
     # ===================================================================
     # Delete File
@@ -170,7 +173,7 @@ class FileManager
         if substr(cFileName, ".ring")
             cTemplate += "load \"stdlib.ring\"" + nl + nl +
                         "func main()" + nl +
-                        "    see \"Hello from " + cFileName + "!\" + nl" + nl +
+                        '    see \"Hello from ' + cFileName + '!\" + nl' + nl +
                         nl
         ok
         

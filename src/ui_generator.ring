@@ -291,6 +291,106 @@ class UIGenerator
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
     <script>
+        // Utility functions for Ring communication
+        async function callRing(funcName, ...args) {
+            try {
+                console.log("Calling Ring function: ${funcName} with args:", args);
+                const response = await window[funcName](JSON.stringify(args));
+                console.log("Response from Ring (${funcName}):", response);
+                return response;
+            } catch (error) {
+                console.error("Error calling Ring function ${funcName}:", error);
+                throw error;
+            }
+        }
+
+        function showStatus(message) {
+            const statusText = document.getElementById('statusText');
+            if (statusText) {
+                statusText.textContent = message;
+            }
+        }
+
+        // File Operations
+        async function createNewFile() {
+            try {
+                const fileName = prompt("أدخل اسم الملف:", "new_file.ring");
+                if (!fileName) return;
+                
+                showStatus("جاري إنشاء الملف...");
+                const response = await callRing('createNewFile', fileName);
+                
+                if (response === "true") {
+                    await updateFileList();
+                    showStatus("تم إنشاء الملف " + fileName);
+                } else {
+                    showStatus("فشل في إنشاء الملف");
+                }
+            } catch (error) {
+                showStatus("حدث خطأ في إنشاء الملف");
+            }
+        }
+
+        async function deleteFile(fileName) {
+            try {
+                if (!confirm("هل أنت متأكد من حذف الملف: " + fileName + "؟")) return;
+                
+                showStatus("جاري حذف الملف...");
+                const response = await callRing('deleteFile', fileName);
+                
+                if (response === "true") {
+                    await updateFileList();
+                    showStatus("تم حذف الملف");
+                } else {
+                    showStatus("فشل في حذف الملف");
+                }
+            } catch (error) {
+                showStatus("حدث خطأ في حذف الملف");
+            }
+        }
+
+        async function saveCurrentFile() {
+            try {
+                if (!currentFile) {
+                    currentFile = prompt("أدخل اسم الملف للحفظ:", "new_file.ring");
+                    if (!currentFile) return;
+                }
+                
+                showStatus("جاري حفظ الملف...");
+                const code = editor.getValue();
+                const response = await callRing('saveFile', currentFile, code);
+                
+                if (response === "true") {
+                    showStatus("تم حفظ الملف " + currentFile);
+                } else {
+                    showStatus("فشل في حفظ الملف");
+                }
+            } catch (error) {
+                showStatus("حدث خطأ في حفظ الملف");
+            }
+        }
+
+        async function updateFileList() {
+            try {
+                const response = await callRing('getFileList');
+                const files = JSON.parse(response);
+                
+                const fileList = document.getElementById('fileList');
+                fileList.innerHTML = '';
+                
+                files.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'file-item';
+                    div.textContent = file;
+                    div.onclick = () => loadFile(file);
+                    fileList.appendChild(div);
+                });
+            } catch (error) {
+                showStatus("حدث خطأ في تحديث قائمة الملفات");
+            }
+        }
+    </script>
+    <script>
         // Initialize CodeMirror
         let editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
             lineNumbers: true,
@@ -303,9 +403,8 @@ class UIGenerator
         });
         
         // Set initial Ring code example
-        editor.setValue(\`
-        
-# مرحباً بك في Ring Programming IDE
+        editor.setValue(`+
+'# مرحباً بك في Ring Programming IDE
 # هذا مثال بسيط لبرنامج Ring
 
 load "stdlib.ring"
@@ -330,13 +429,14 @@ func main()
     see "النتيجة: " + result + nl
 
 func calculateSum(nNum1, nNum2)
-    return nNum1 + nNum2\`);
+    return nNum1 + nNum2' +
+`);
         
         // Update cursor position
         editor.on('cursorActivity', function() {
             const cursor = editor.getCursor();
             document.getElementById('cursorPosition').textContent = 
-                \`السطر: \${cursor.line + 1}, العمود: \${cursor.ch + 1}\`;
+                "السطر: ${cursor.line + 1}, العمود: ${cursor.ch + 1}";
         });
         
         // Global variables
@@ -346,7 +446,6 @@ func calculateSum(nNum1, nNum2)
         // Initialize file list
         updateFileList();
     </script>
-    <script src="assets/js/app.js"></script>
 </body>
 </html>
         `

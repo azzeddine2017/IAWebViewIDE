@@ -5,10 +5,10 @@
 load "webview.ring"
 load "jsonlib.ring"
 load "stdlib.ring"
-load "src/smart_agent.ring"
-load "src/ui_generator.ring"
-load "src/file_manager.ring"
-load "src/code_runner.ring"
+load "smart_agent.ring"
+load "ui_generator.ring"
+load "file_manager.ring"
+load "code_runner.ring"
 
 # ===================================================================
 # Main Application Class
@@ -22,7 +22,7 @@ class RingIDE
     oFileManager = NULL
     oCodeRunner = NULL
     cCurrentProject = ""
-    
+    oWebView = NULL
     # ===================================================================
     # Constructor
     # ===================================================================
@@ -34,7 +34,7 @@ class RingIDE
         oUIGenerator = new UIGenerator()
         oFileManager = new FileManager()
         oCodeRunner = new CodeRunner()
-
+        
         see "All components initialized successfully." + nl
     
     # ===================================================================
@@ -43,32 +43,39 @@ class RingIDE
     func start()
         try
             # Create webview instance
-            oWebView = new WebView()
+            this.oWebView = new WebView()
             
             # Configure webview
-            oWebView {
+            this.oWebView {
                 setTitle("Ring Programming IDE - AI Powered Agent")
                 setSize(1400, 900, WEBVIEW_HINT_NONE)
-
+                
+                 # You can also use bindMany(BindList) to explicitly bind the list.
+                 # Like this: 
+                BindList = [
                 # Bind Ring functions to JavaScript
-                bind("processRequest", :processRequest)
-                bind("chatWithAI", :chatWithAI)
-                bind("getAgentStatus", :getAgentStatus)
-                bind("setCurrentProject", :setCurrentProject)
-                bind("setCurrentFile", :setCurrentFile)
+               ["processRequest", :processRequest],
+               ["chatWithAI", :chatWithAI],
+               ["getAgentStatus", :getAgentStatus],
+               ["setCurrentProject", :setCurrentProject],
+               ["setCurrentFile", :setCurrentFile],
 
                 # Legacy functions for backward compatibility
-                bind("saveFile", :saveFile)
-                bind("loadFile", :loadFile)
-                bind("runCode", :runCode)
-                bind("getFileList", :getFileList)
-                bind("createNewFile", :createNewFile)
-                bind("deleteFile", :deleteFile)
-                bind("analyzeCode", :analyzeCode)
-                bind("formatCode", :formatCode)
+                ["saveFile", :saveFile],
+                ["loadFile", :loadFile],
+                ["runCode", :runCode],
+                ["getFileList", :getFileList],
+                ["createNewFile", :createNewFile],
+                ["deleteFile", :deleteFile],
+                ["analyzeCode", :analyzeCode],
+                ["formatCode", :formatCode],
+                ["getCodeSuggestions", :getCodeSuggestions]
+                ]
                 
+                bindMany(BindList)
+
                 # Load the main HTML interface
-                setHtml(oUIGenerator.getMainHTML())
+                setHtml(this.oUIGenerator.getMainHTML())
                 
                 # Start the application
                 run()
@@ -82,32 +89,46 @@ class RingIDE
     # File Operations - Delegate to FileManager
     # ===================================================================
     func saveFile(id, req)
-        oFileManager.saveFile(id, req, oWebView)
+        oFileManager.saveFile(id, req, this.oWebView)
     
     func loadFile(id, req)
-        oFileManager.loadFile(id, req, oWebView)
-    
+        oFileManager.loadFile(id, req, this.oWebView)
+
     func createNewFile(id, req)
-        oFileManager.createNewFile(id, req, oWebView)
-    
+        see "CreateNewFile - Request Data: " + req + nl
+        see "CreateNewFile - Request Type: " + type(req) + nl
+        if req = NULL or len(req) = 0
+            see "Warning: Empty request received in createNewFile" + nl
+            oWebView.wreturn(id, WEBVIEW_ERROR_OK, "false")
+            return
+        ok
+        oFileManager.createNewFile(id, req, this.oWebView)
+
     func deleteFile(id, req)
-        oFileManager.deleteFile(id, req, oWebView)
-    
+        see "DeleteFile - Request Data: " + req + nl
+        if req = NULL or len(req) = 0
+            see "Warning: Empty request received in deleteFile" + nl
+            oWebView.wreturn(id, WEBVIEW_ERROR_OK, "false")
+            return
+        ok
+        oFileManager.deleteFile(id, req, this.oWebView)
+
     func getFileList(id, req)
-        oFileManager.getFileList(id, req, oWebView)
-    
+        see "GetFileList - Request Data: " + req + nl
+        oFileManager.getFileList(id, req, this.oWebView)
+
     # ===================================================================
     # Code Operations - Delegate to CodeRunner
     # ===================================================================
     func runCode(id, req)
-        oCodeRunner.runCode(id, req, oWebView)
+        oCodeRunner.runCode(id, req, this.oWebView)
     
     func formatCode(id, req)
-        oCodeRunner.formatCode(id, req, oWebView)
-    
+        oCodeRunner.formatCode(id, req, this.oWebView)
+
     func analyzeCode(id, req)
-        oCodeRunner.analyzeCode(id, req, oWebView)
-    
+        oCodeRunner.analyzeCode(id, req, this.oWebView)
+
     func getCodeSuggestions(id, req)
         # Legacy function - redirect to Smart Agent
         try

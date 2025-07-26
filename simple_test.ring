@@ -10,7 +10,7 @@ try
     see "✓ تم إنشاء كائن AgentTools بنجاح" + nl
     
     # Test write file
-    oResult = oTools.executeTool("write_file", ["test_hello.ring", "see \"Hello World!\" + nl"])
+    oResult = oTools.executeTool("write_file", ["test_hello.ring", 'see \"Hello World!\" + nl'])
     if oResult["success"]
         see "✓ تم إنشاء ملف الاختبار بنجاح" + nl
     else

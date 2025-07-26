@@ -590,3 +590,9 @@ class AgentTools
         ok
 
         return [true, "Parameters valid"]
+
+class stdclass
+    name 
+    description
+    parameters
+    category
