@@ -25,11 +25,19 @@ class FileManager
     # Save File
     # ===================================================================
     func saveFile(id, req, oWebView)
-        try
-            aParams = json2list(req)
-            cFileName = aParams[1][1]
-            cContent = aParams[1][2]
-            
+       // try
+       ? req
+            aParams = json2list(req)[1]
+            ? "aParams: " + list2code(aParams) + nl
+            cStr = aParams[1]
+            cFileName = split(cStr, ",")[1]
+            cFileName = trim(cFileName)
+            ?  cFileName
+
+            cContent = split(cStr, ",")[2]
+            cContent = trim(cContent) 
+            ?   cContent
+
             # Save file
             cFilePath = cFilesDirectory + "/" + cFileName
             write(cFilePath, cContent)
@@ -42,10 +50,10 @@ class FileManager
             oWebView.wreturn(id, WEBVIEW_ERROR_OK, "true")
             see "File saved: " + cFileName + nl
             
-        catch
+     /*   catch
             see "Error saving file: " + cCatchError + nl
             oWebView.wreturn(id, WEBVIEW_ERROR_OK, "false")
-        done
+        done*/
     
     # ===================================================================
     # Load File

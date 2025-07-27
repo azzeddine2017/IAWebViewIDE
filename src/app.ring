@@ -75,8 +75,12 @@ class RingIDE
                 bindMany(BindList)
 
                 # Load the main HTML interface
-                setHtml(this.oUIGenerator.getMainHTML())
-                
+                //setHtml(this.oUIGenerator.getMainHTML())
+
+                # Navigate the webview to a local HTML file.
+	            # Prepend "file://" to the absolute path for local file access.
+	            navigate("file://" + currentdir() + "/assets/html/index.html")
+
                 # Start the application
                 run()
             }
@@ -133,7 +137,7 @@ class RingIDE
         # Legacy function - redirect to Smart Agent
         try
             aParams = json2list(req)
-            cCode = aParams[1]
+            cCode = aParams[1][1]
             oResponse = oSmartAgent.processRequest("اقترح تحسينات للكود", cCode)
 
             if oResponse["success"]
@@ -154,8 +158,8 @@ class RingIDE
     func processRequest(id, req)
         try
             aParams = json2list(req)
-            cUserMessage = aParams[1]
-            cCurrentCode = aParams[2]
+            cUserMessage = aParams[1][1]
+            cCurrentCode = aParams[1][2]
 
             # Process request through Smart Agent
             oResponse = oSmartAgent.processRequest(cUserMessage, cCurrentCode)
@@ -189,7 +193,7 @@ class RingIDE
     func setCurrentProject(id, req)
         try
             aParams = json2list(req)
-            cProjectName = aParams[1]
+            cProjectName = aParams[1][1]
             oSmartAgent.setCurrentProject(cProjectName)
             cCurrentProject = cProjectName
             cJsonResponse = list2json(["تم تعيين المشروع: " + cProjectName])
@@ -202,7 +206,7 @@ class RingIDE
     func setCurrentFile(id, req)
         try
             aParams = json2list(req)
-            cFileName = aParams[1]
+            cFileName = aParams[1][1]
             oSmartAgent.setCurrentFile(cFileName)
             cJsonResponse = list2json(["تم تعيين الملف: " + cFileName])
             oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResponse)
@@ -217,8 +221,8 @@ class RingIDE
     func chatWithAI(id, req)
         try
             aParams = json2list(req)
-            cMessage = aParams[1]
-            cCurrentCode = aParams[2]
+            cMessage = aParams[1][1]
+            cCurrentCode = aParams[1][2]
 
             # Use Smart Agent for chat
             oResponse = oSmartAgent.processRequest(cMessage, cCurrentCode)
