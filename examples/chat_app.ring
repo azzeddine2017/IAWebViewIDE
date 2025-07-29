@@ -7,10 +7,13 @@ load "jsonlib.ring"
 load "stdlib.ring"
 
 # تهيئة WebView مع الربط بين Ring و JavaScript
-
+oWebView = null
 oChatApp = new ChatApp()
 
 class ChatApp
+
+
+func init 
 
 oWebView = new WebView()
 # تهيئة النافذة وربط الدوال
