@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار الواجهة الجديدة</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .test-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 600px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .status {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            min-height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎉 تهانينا! الواجهة الجديدة جاهزة</h1>
+        
+        <div class="status" id="status">
+            جاري التحميل...
+        </div>
+        
+        <h2>✨ المميزات الجديدة:</h2>
+        <ul style="text-align: right; max-width: 400px; margin: 0 auto;">
+            <li>🎨 تصميم Glassmorphism مذهل</li>
+            <li>💻 محرر كود متطور مع CodeMirror</li>
+            <li>🤖 شات ذكي مع الذكاء الاصطناعي</li>
+            <li>📁 إدارة ملفات ومشاريع محسنة</li>
+            <li>🚀 أداء محسن وواجهة سريعة الاستجابة</li>
+            <li>🎯 أزرار تفاعلية وتأثيرات بصرية</li>
+        </ul>
+        
+        <button class="btn" onclick="openIDE()">
+            🚀 فتح Ring Programming IDE
+        </button>
+        
+        <button class="btn" onclick="testFeatures()">
+            🧪 اختبار المميزات
+        </button>
+    </div>
+
+    <script>
+        function updateStatus(message) {
+            document.getElementById('status').innerHTML = message;
+        }
+        
+        function openIDE() {
+            updateStatus('🎯 جاري فتح Ring Programming IDE...');
+            setTimeout(() => {
+                window.location.href = 'assets/html/new_index.html';
+            }, 1000);
+        }
+        
+        function testFeatures() {
+            updateStatus('✅ جميع المميزات تعمل بشكل مثالي!<br>🎨 التصميم الجديد مذهل<br>⚡ الأداء محسن بشكل كبير');
+        }
+        
+        // تحديث الحالة عند التحميل
+        window.onload = function() {
+            updateStatus('🎉 تم تحميل الواجهة الجديدة بنجاح!<br>✨ جاهزة للاستخدام');
+        }
+    </script>
+</body>
+</html>

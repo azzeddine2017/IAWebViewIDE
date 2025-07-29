@@ -40,27 +40,38 @@ class SmartAgent
     # Process User Request
     # ===================================================================
     func processRequest(cUserMessage, cCurrentCode)
-       // try
+        try
+            see "Processing request: " + cUserMessage + nl
+
+            # Validate input
+            if cUserMessage = "" or cUserMessage = null
+                return createErrorResponse("رسالة فارغة")
+            ok
+
             # Add user message to context
             oContextEngine.addToHistory("user", cUserMessage, "chat")
-            
+
             # Determine request type
             cRequestType = analyzeRequestType(cUserMessage)
-            
+            see "Request type: " + cRequestType + nl
+
             # Check if this is a tool request
             oToolRequest = parseToolRequest(cUserMessage)
-            
+
             if oToolRequest["is_tool_request"]
+                see "Executing tool directly: " + oToolRequest["tool_name"] + nl
                 # Execute tool directly
                 return executeToolRequest(oToolRequest, cCurrentCode)
             else
+                see "Sending to AI for processing..." + nl
                 # Send to AI for processing
                 return sendToAI(cUserMessage, cRequestType, cCurrentCode)
             ok
-            
-      /*  catch
-            return createErrorResponse("Request processing failed: " + cCatchError)
-        done*/
+
+        catch
+            see "Error in processRequest: " + cCatchError + nl
+            return createErrorResponse("فشل في معالجة الطلب: " + cCatchError)
+        done
     
     # ===================================================================
     # Analyze Request Type
@@ -105,15 +116,30 @@ class SmartAgent
         if substr(cLowerMessage, "اكتب ملف") or substr(cLowerMessage, "write file")
             oResult["is_tool_request"] = true
             oResult["tool_name"] = "write_file"
-            # Extract filename and content from message
-            # This is a simplified parser - in production, use more sophisticated NLP
+            # Try to extract filename from message
+            if substr(cMessage, "باسم")
+                nPos = substr(cMessage, "باسم")
+                cRest = substr(cMessage, nPos + 4)
+                aWords = str2list(cRest)
+                if len(aWords) > 0
+                    cFileName = trim(aWords[1])
+                    oResult["parameters"] = [cFileName, "# ملف جديد" + nl + "see " + char(34) + "Hello World!" + char(34) + " + nl"]
+                ok
+            ok
         ok
-        
-        if substr(cLowerMessage, "شغل الكود") or substr(cLowerMessage, "run code")
+
+        if substr(cLowerMessage, "شغل الكود") or substr(cLowerMessage, "run code") or
+           substr(cLowerMessage, "تشغيل") or substr(cLowerMessage, "execute")
             oResult["is_tool_request"] = true
             oResult["tool_name"] = "run_ring_code"
         ok
-        
+
+        if substr(cLowerMessage, "حلل الكود") or substr(cLowerMessage, "analyze code") or
+           substr(cLowerMessage, "تحليل")
+            oResult["is_tool_request"] = true
+            oResult["tool_name"] = "analyze_code"
+        ok
+
         if substr(cLowerMessage, "اعرض الملفات") or substr(cLowerMessage, "list files")
             oResult["is_tool_request"] = true
             oResult["tool_name"] = "list_files"
@@ -167,64 +193,59 @@ class SmartAgent
     # ===================================================================
     func sendToAI(cMessage, cRequestType, cCurrentCode)
         try
+            see "Building context for AI request..." + nl
+
             # Build context for AI
             aContext = oContextEngine.buildContext(cRequestType, cCurrentCode)
             cSystemPrompt = oContextEngine.getSystemPrompt(cRequestType)
-            
+
+            see "System prompt: " + left(cSystemPrompt, 100) + "..." + nl
+
             # Add current code to context if available
-            if cCurrentCode != ""
+            if cCurrentCode != "" and cCurrentCode != null
                 oContextEngine.addCodeContext(cCurrentFile, cCurrentCode, "ring")
+                see "Added code context" + nl
             ok
-            
+
             # Enhance message with tool information
             cEnhancedMessage = enhanceMessageWithTools(cMessage, cRequestType)
-            
+            see "Enhanced message: " + left(cEnhancedMessage, 100) + "..." + nl
+
             # Send request to AI
+            see "Sending request to AI..." + nl
             oAIResponse = oAIClient.sendChatRequest(cEnhancedMessage, cSystemPrompt, aContext)
-            
+
             if oAIResponse["success"]
                 cAIContent = oAIResponse["content"]
-                
+                see "AI response received: " + left(cAIContent, 100) + "..." + nl
+
                 # Check if AI wants to use tools
                 oToolUsage = parseAIToolUsage(cAIContent)
-                
+
                 if oToolUsage["wants_to_use_tools"]
+                    see "AI wants to use tools" + nl
                     # Execute tools requested by AI
                     cToolResults = executeAIRequestedTools(oToolUsage["tools"])
                     cFinalResponse = cAIContent + nl + nl + "Tool Results:" + nl + cToolResults
                 else
                     cFinalResponse = cAIContent
                 ok
-                
+
                 # Add to conversation history
                 oContextEngine.addToHistory("assistant", cFinalResponse, "ai_response")
-                
+
                 return createSuccessResponse(cFinalResponse)
             else
-                return createErrorResponse(oAIResponse["error"])
+                see "AI request failed: " + oAIResponse["error"] + nl
+                return createErrorResponse("فشل في الحصول على استجابة من الذكاء الاصطناعي: " + oAIResponse["error"])
             ok
-            
+
         catch
-            return createErrorResponse("AI processing failed: " + cCatchError)
+            see "Error in sendToAI: " + cCatchError + nl
+            return createErrorResponse("فشل في معالجة الطلب بواسطة الذكاء الاصطناعي: " + cCatchError)
         done
     
-    # ===================================================================
-    # Enhance Message with Tool Information
-    # ===================================================================
-    func enhanceMessageWithTools(cMessage, cRequestType)
-        cEnhancedMessage = cMessage + nl + nl
-        
-        # Add available tools information
-        cEnhancedMessage += "Available Tools:" + nl
-        cEnhancedMessage += oAgentTools.getToolsList() + nl
-        
-        # Add instructions for tool usage
-        cEnhancedMessage += nl + "Tool Usage Instructions:" + nl
-        cEnhancedMessage += "To use a tool, include in your response:" + nl
-        cEnhancedMessage += "TOOL_REQUEST: tool_name(parameter1, parameter2, ...)" + nl
-        cEnhancedMessage += "You can request multiple tools in one response." + nl
-        
-        return cEnhancedMessage
+    
     
     # ===================================================================
     # Parse AI Tool Usage
@@ -306,7 +327,25 @@ class SmartAgent
             "message" = "",
             "error" = cError
         ]
-    
+
+    # ===================================================================
+    # Enhanced Message with Tools
+    # ===================================================================
+    func enhanceMessageWithTools(cMessage, cRequestType)
+        cEnhanced = cMessage
+
+        # Add tool information based on request type
+        switch cRequestType
+            on "file_operation"
+                cEnhanced += nl + nl + "الأدوات المتاحة: write_file, read_file, delete_file, list_files"
+            on "code_execution"
+                cEnhanced += nl + nl + "الأدوات المتاحة: run_ring_code, analyze_code, format_code"
+            on "project_management"
+                cEnhanced += nl + nl + "الأدوات المتاحة: create_project, analyze_project"
+        off
+
+        return cEnhanced
+
     # ===================================================================
     # Agent Management
     # ===================================================================

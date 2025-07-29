@@ -17,7 +17,6 @@ func main()
     
     # Create and start the application
     oApp = new RingIDE()
-    oApp.init()  # تهيئة المكونات أولاً
     oApp.start() # ثم بدء التطبيق
     
     see "Ring Programming IDE closed." + nl

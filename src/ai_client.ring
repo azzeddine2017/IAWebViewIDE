@@ -39,14 +39,30 @@ class AIClient
             if fexists("config/api_keys.json")
                 cConfigContent = read("config/api_keys.json")
                 oConfig = json2list(cConfigContent)
-                
+
                 if type(oConfig) = "LIST" and len(oConfig) > 0
                     oKeys = oConfig[1]
                     if type(oKeys) = "LIST"
-                        cGeminiAPIKey = getValue(oKeys, "gemini_api_key", "")
-                        cOpenAIAPIKey = getValue(oKeys, "openai_api_key", "")
-                        cClaudeAPIKey = getValue(oKeys, "claude_api_key", "")
+                        # Load API keys with correct field names
+                        oGemini = getValue(oKeys, "gemini", [])
+                        if type(oGemini) = "LIST"
+                            cGeminiAPIKey = getValue(oGemini, "api_key", "")
+                        ok
+
+                        oOpenAI = getValue(oKeys, "openai", [])
+                        if type(oOpenAI) = "LIST"
+                            cOpenAIAPIKey = getValue(oOpenAI, "api_key", "")
+                        ok
+
+                        oClaude = getValue(oKeys, "claude", [])
+                        if type(oClaude) = "LIST"
+                            cClaudeAPIKey = getValue(oClaude, "api_key", "")
+                        ok
+
                         cCurrentProvider = getValue(oKeys, "default_provider", "gemini")
+                        nMaxTokens = getValue(oKeys, "max_tokens", 4000)
+                        nTemperature = getValue(oKeys, "temperature", 0.7)
+                        nTimeout = getValue(oKeys, "timeout", 30)
                     ok
                 ok
             else
@@ -256,25 +272,34 @@ class AIClient
     # ===================================================================
     func buildContextualPrompt(cMessage, cSystemPrompt, aContext)
         cPrompt = ""
-        
-        if cSystemPrompt != ""
+
+        # Add system prompt
+        if cSystemPrompt != "" and cSystemPrompt != null
             cPrompt += "System: " + cSystemPrompt + nl + nl
         ok
-        
+
+        # Add context
         if type(aContext) = "LIST" and len(aContext) > 0
             cPrompt += "Context:" + nl
             for oContextItem in aContext
                 if type(oContextItem) = "LIST"
                     cRole = getValue(oContextItem, "role", "user")
                     cContent = getValue(oContextItem, "content", "")
-                    cPrompt += cRole + ": " + cContent + nl
+                    if cRole != "" and cContent != "" and cRole != null and cContent != null
+                        cPrompt += cRole + ": " + cContent + nl
+                    ok
+                elseif type(oContextItem) = "STRING" and oContextItem != ""
+                    cPrompt += oContextItem + nl
                 ok
             next
             cPrompt += nl
         ok
-        
-        cPrompt += "User: " + cMessage
-        
+
+        # Add user message
+        if cMessage != "" and cMessage != null
+            cPrompt += "User: " + cMessage
+        ok
+
         return cPrompt
     
     # ===================================================================
@@ -311,10 +336,22 @@ class AIClient
         try
             # Use Ring's internet library for HTTP requests
             cCommand = buildCurlCommand(cURL, cData, cMethod, aHeaders)
+            see "Executing command: " + cCommand + nl
             cResponse = systemcmd(cCommand)
+
+            # Clean up temporary file if it exists
+            if fexists("temp_request.json")
+                remove("temp_request.json")
+            ok
+
+            see "API Response: " + left(cResponse, 200) + "..." + nl
             return cResponse
 
         catch
+            # Clean up temporary file if it exists
+            if fexists("temp_request.json")
+                remove("temp_request.json")
+            ok
             return '{"error": "HTTP request failed: ' + cCatchError + '"}'
         done
 
@@ -333,9 +370,10 @@ class AIClient
 
         # Add data for POST requests
         if cMethod = "POST" and cData != ""
-            # Escape quotes in JSON data
-            cEscapedData = substr(cData, '"', '\"')
-            cCommand += '-d "' + cEscapedData + '" '
+            # Write data to temporary file to avoid command line issues
+            cTempFile = "temp_request.json"
+            write(cTempFile, cData)
+            cCommand += '-d @' + cTempFile + ' '
         ok
 
         cCommand += '"' + cURL + '"'
@@ -347,36 +385,59 @@ class AIClient
     # ===================================================================
     func parseGeminiResponse(cResponse)
         try
+            # Check if response is empty or contains error
+            if cResponse = "" or cResponse = null
+                return createErrorResponse("Empty response from Gemini API")
+            ok
+
+            # Check for curl errors
+            if substr(cResponse, "curl:")
+                return createErrorResponse("Network error: " + cResponse)
+            ok
+
             oResponse = json2list(cResponse)
 
             if type(oResponse) = "LIST" and len(oResponse) > 0
                 oData = oResponse[1]
 
-                # Check for error
+                # Check for API error
                 if find(oData, "error")
-                    cError = getValue(oData, "error", "Unknown error")
-                    return createErrorResponse("Gemini API error: " + cError)
+                    oError = getValue(oData, "error", [])
+                    if type(oError) = "LIST"
+                        cErrorMsg = getValue(oError, "message", "Unknown error")
+                        cErrorCode = getValue(oError, "code", "")
+                        return createErrorResponse("Gemini API error [" + cErrorCode + "]: " + cErrorMsg)
+                    else
+                        return createErrorResponse("Gemini API error: " + oError)
+                    ok
                 ok
 
                 # Extract content
                 aCandidates = getValue(oData, "candidates", [])
                 if type(aCandidates) = "LIST" and len(aCandidates) > 0
                     oCandidate = aCandidates[1]
-                    oContent = getValue(oCandidate, "content", [])
-                    aParts = getValue(oContent, "parts", [])
-
-                    if type(aParts) = "LIST" and len(aParts) > 0
-                        oPart = aParts[1]
-                        cText = getValue(oPart, "text", "")
-                        return createSuccessResponse(cText)
+                    if type(oCandidate) = "LIST"
+                        oContent = getValue(oCandidate, "content", [])
+                        if type(oContent) = "LIST"
+                            aParts = getValue(oContent, "parts", [])
+                            if type(aParts) = "LIST" and len(aParts) > 0
+                                oPart = aParts[1]
+                                if type(oPart) = "LIST"
+                                    cText = getValue(oPart, "text", "")
+                                    if cText != ""
+                                        return createSuccessResponse(cText)
+                                    ok
+                                ok
+                            ok
+                        ok
                     ok
                 ok
             ok
 
-            return createErrorResponse("Invalid Gemini response format")
+            return createErrorResponse("Invalid Gemini response format: " + left(cResponse, 100))
 
         catch
-            return createErrorResponse("Failed to parse Gemini response: " + cCatchError)
+            return createErrorResponse("Failed to parse Gemini response: " + cCatchError + " | Response: " + left(cResponse, 100))
         done
 
     # ===================================================================

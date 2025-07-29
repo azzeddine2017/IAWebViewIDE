@@ -7,9 +7,12 @@ load "jsonlib.ring"
 load "stdlib.ring"
 
 # تهيئة WebView مع الربط بين Ring و JavaScript
+
+oChatApp = new ChatApp()
+
+class ChatApp
+
 oWebView = new WebView()
-
-
 # تهيئة النافذة وربط الدوال
 oWebView {
     setTitle("تطبيق المحادثة")
@@ -146,7 +149,7 @@ func sendMessage(id, req)
         
         # هنا يمكنك معالجة الرسالة (مثلاً إرسالها للذكاء الاصطناعي)
         cResponse = "مرحباً! تلقيت رسالتك: " + cMessage
-        
+        ? cResponse
         # إرجاع الرد إلى JavaScript
         oWebView.wreturn(id, WEBVIEW_ERROR_OK, '"' + cResponse + '"')
         

@@ -25,27 +25,53 @@ class CodeRunner
     # ===================================================================
     func runCode(id, req, oWebView)
         try
+            see "Running code request: " + req + nl
+
             aParams = json2list(req)
-            cCode = aParams[1][1]
-            
+            if type(aParams) != "LIST" or len(aParams) = 0
+                cErrorMsg = "معاملات غير صحيحة لتشغيل الكود"
+                cJsonError = list2json([cErrorMsg])
+                oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+                return
+            ok
+
+            # Extract code - handle different parameter formats
+            cCode = ""
+            if len(aParams) >= 1
+                if type(aParams[1]) = "LIST" and len(aParams[1]) >= 1
+                    cCode = aParams[1][1]  # Format: [["code"]]
+                else
+                    cCode = aParams[1]     # Format: ["code"]
+                ok
+            ok
+
+            if cCode = "" or cCode = null
+                cErrorMsg = "لا يوجد كود للتشغيل"
+                cJsonError = list2json([cErrorMsg])
+                oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+                return
+            ok
+
+            see "Code to execute: " + left(cCode, 100) + "..." + nl
+
             # Save code to temporary file
             cTempFile = cTempDirectory + "/temp_code.ring"
             write(cTempFile, cCode)
-            
+
             # Execute the code
             cCommand = "ring " + cTempFile
-            cResult = system(cCommand)
-            
+            cResult = systemcmd(cCommand)
+
             # Clean up
             if fexists(cTempFile)
                 remove(cTempFile)
             ok
-            
+
             # Return result
             cJsonResult = list2json([cResult])
             oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResult)
             see "Code executed successfully" + nl
-            
+
         catch
             see "Error running code: " + cCatchError + nl
             cErrorMsg = "خطأ في تشغيل الكود: " + cCatchError
@@ -58,19 +84,45 @@ class CodeRunner
     # ===================================================================
     func formatCode(id, req, oWebView)
         try
+            see "Formatting code request: " + req + nl
+
             aParams = json2list(req)
-            cCode = aParams[1][1]
-            
+            if type(aParams) != "LIST" or len(aParams) = 0
+                cErrorMsg = "معاملات غير صحيحة لتنسيق الكود"
+                cJsonError = list2json([cErrorMsg])
+                oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+                return
+            ok
+
+            # Extract code - handle different parameter formats
+            cCode = ""
+            if len(aParams) >= 1
+                if type(aParams[1]) = "LIST" and len(aParams[1]) >= 1
+                    cCode = aParams[1][1]  # Format: [["code"]]
+                else
+                    cCode = aParams[1]     # Format: ["code"]
+                ok
+            ok
+
+            if cCode = "" or cCode = null
+                cErrorMsg = "لا يوجد كود للتنسيق"
+                cJsonError = list2json([cErrorMsg])
+                oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+                return
+            ok
+
             # Basic code formatting for Ring
             cFormattedCode = formatRingCode(cCode)
-            
+
             cJsonResult = list2json([cFormattedCode])
             oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResult)
             see "Code formatted successfully" + nl
-            
+
         catch
             see "Error formatting code: " + cCatchError + nl
-            oWebView.wreturn(id, WEBVIEW_ERROR_OK, "null")
+            cErrorMsg = "خطأ في تنسيق الكود: " + cCatchError
+            cJsonError = list2json([cErrorMsg])
+            oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
         done
     
     # ===================================================================
@@ -78,19 +130,43 @@ class CodeRunner
     # ===================================================================
     func analyzeCode(id, req, oWebView)
         try
+            see "Analyzing code request: " + req + nl
+
             aParams = json2list(req)
-            cCode = aParams[1][1]
-            
+            if type(aParams) != "LIST" or len(aParams) = 0
+                cErrorMsg = "معاملات غير صحيحة لتحليل الكود"
+                cJsonError = list2json([cErrorMsg])
+                oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+                return
+            ok
+
+            # Extract code - handle different parameter formats
+            cCode = ""
+            if len(aParams) >= 1
+                if type(aParams[1]) = "LIST" and len(aParams[1]) >= 1
+                    cCode = aParams[1][1]  # Format: [["code"]]
+                else
+                    cCode = aParams[1]     # Format: ["code"]
+                ok
+            ok
+
+            if cCode = "" or cCode = null
+                cErrorMsg = "لا يوجد كود للتحليل"
+                cJsonError = list2json([cErrorMsg])
+                oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+                return
+            ok
+
             # Analyze Ring code
             cAnalysis = analyzeRingCode(cCode)
-            
+
             cJsonResult = list2json([cAnalysis])
             oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResult)
             see "Code analyzed successfully" + nl
-            
+
         catch
             see "Error analyzing code: " + cCatchError + nl
-            cErrorMsg = "خطأ في تحليل الكود"
+            cErrorMsg = "خطأ في تحليل الكود: " + cCatchError
             cJsonError = list2json([cErrorMsg])
             oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
         done

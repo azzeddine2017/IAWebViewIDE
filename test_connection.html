@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار الربط مع Ring</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .test-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 600px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .result {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            min-height: 50px;
+            text-align: right;
+        }
+        input {
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            margin: 10px;
+            font-size: 16px;
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔗 اختبار الربط مع Ring Backend</h1>
+        
+        <div class="result" id="result">
+            جاري التحميل...
+        </div>
+        
+        <h2>اختبار الوظائف:</h2>
+        
+        <div>
+            <input type="text" id="fileName" placeholder="اسم الملف" value="test.ring">
+            <button class="btn" onclick="testCreateFile()">
+                📄 اختبار إنشاء ملف
+            </button>
+        </div>
+        
+        <div>
+            <button class="btn" onclick="testRunCode()">
+                ▶️ اختبار تشغيل الكود
+            </button>
+        </div>
+        
+        <div>
+            <button class="btn" onclick="testAIChat()">
+                🤖 اختبار الشات الذكي
+            </button>
+        </div>
+        
+        <div>
+            <button class="btn" onclick="testFileList()">
+                📋 اختبار قائمة الملفات
+            </button>
+        </div>
+        
+        <div>
+            <button class="btn" onclick="checkFunctions()">
+                🔍 فحص الوظائف المتاحة
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function updateResult(message) {
+            document.getElementById('result').innerHTML = message;
+        }
+        
+        async function testCreateFile() {
+            const fileName = document.getElementById('fileName').value;
+            updateResult('🔄 جاري اختبار إنشاء الملف: ' + fileName);
+            
+            try {
+                if (typeof window.createNewFile === 'function') {
+                    const result = await window.createNewFile(JSON.stringify([fileName]));
+                    updateResult('✅ نجح اختبار إنشاء الملف!<br>النتيجة: ' + JSON.stringify(result));
+                } else {
+                    updateResult('❌ وظيفة createNewFile غير متوفرة');
+                }
+            } catch (error) {
+                updateResult('❌ خطأ في اختبار إنشاء الملف: ' + error.message);
+            }
+        }
+        
+        async function testRunCode() {
+            updateResult('🔄 جاري اختبار تشغيل الكود...');
+            
+            try {
+                const testCode = 'see "مرحباً من Ring!" + nl';
+                if (typeof window.runCode === 'function') {
+                    const result = await window.runCode(JSON.stringify([testCode]));
+                    updateResult('✅ نجح اختبار تشغيل الكود!<br>النتيجة: ' + JSON.stringify(result));
+                } else {
+                    updateResult('❌ وظيفة runCode غير متوفرة');
+                }
+            } catch (error) {
+                updateResult('❌ خطأ في اختبار تشغيل الكود: ' + error.message);
+            }
+        }
+        
+        async function testAIChat() {
+            updateResult('🔄 جاري اختبار الشات الذكي...');
+            
+            try {
+                if (typeof window.sendAIRequest === 'function') {
+                    const result = await window.sendAIRequest(JSON.stringify(['مرحباً', '']));
+                    updateResult('✅ نجح اختبار الشات الذكي!<br>النتيجة: ' + JSON.stringify(result));
+                } else {
+                    updateResult('❌ وظيفة sendAIRequest غير متوفرة');
+                }
+            } catch (error) {
+                updateResult('❌ خطأ في اختبار الشات الذكي: ' + error.message);
+            }
+        }
+        
+        async function testFileList() {
+            updateResult('🔄 جاري اختبار قائمة الملفات...');
+            
+            try {
+                if (typeof window.getFileList === 'function') {
+                    const result = await window.getFileList(JSON.stringify([]));
+                    updateResult('✅ نجح اختبار قائمة الملفات!<br>النتيجة: ' + JSON.stringify(result));
+                } else {
+                    updateResult('❌ وظيفة getFileList غير متوفرة');
+                }
+            } catch (error) {
+                updateResult('❌ خطأ في اختبار قائمة الملفات: ' + error.message);
+            }
+        }
+        
+        function checkFunctions() {
+            updateResult('🔍 فحص الوظائف المتاحة...');
+            
+            const functions = [
+                'createNewFile',
+                'runCode', 
+                'sendAIRequest',
+                'getFileList',
+                'saveFile',
+                'loadFile',
+                'chatWithAI'
+            ];
+            
+            let result = '<h3>الوظائف المتاحة:</h3>';
+            functions.forEach(func => {
+                const available = typeof window[func] === 'function';
+                result += `<div>${available ? '✅' : '❌'} ${func}</div>`;
+            });
+            
+            updateResult(result);
+        }
+        
+        // تحديث الحالة عند التحميل
+        window.onload = function() {
+            updateResult('🎯 جاهز لاختبار الربط مع Ring Backend');
+            setTimeout(checkFunctions, 1000);
+        }
+    </script>
+</body>
+</html>
