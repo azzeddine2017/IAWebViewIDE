@@ -155,7 +155,7 @@ class MockWebView
 # Mock SmartAgent class for testing
 class MockSmartAgent
     func processRequest cMessage, cCode
-        return ["success": true, "message": "تم معالجة الطلب: " + cMessage]
+        return [:success = true, :message = "تم معالجة الطلب: " + cMessage]
     
     func getAgentStatus()
         return "Smart Agent جاهز"
@@ -169,31 +169,31 @@ class MockSmartAgent
 # Mock FileManager class for testing
 class MockFileManager
     func createProject cProjectName
-        return ["success": "تم إنشاء المشروع: " + cProjectName]
+        return [:success = "تم إنشاء المشروع: " + cProjectName]
 
     func openProject()
-        return ["success": "تم فتح المشروع"]
+        return [:success = "تم فتح المشروع"]
 
     func saveProject()
-        return ["success": "تم حفظ المشروع"]
+        return [:success = "تم حفظ المشروع"]
 
     func openFile()
-        return ["success": "تم فتح الملف"]
+        return [:success = "تم فتح الملف"]
 
 # Mock CodeRunner class for testing
 class MockCodeRunner
     func formatCode id, req, oWebView
         see "تنسيق الكود..." + nl
-        aResult = ["formatted_code": "# كود منسق"]
+        aResult = [:formatted_code = "# كود منسق"]
         cJsonResponse = list2json(aResult)
         oWebView.wreturn(id, 0, cJsonResponse)
     
     func analyzeCode id, req, oWebView
         see "تحليل الكود..." + nl
-        aResult = ["analysis": "تحليل الكود مكتمل"]
+        aResult = [:analysis = "تحليل الكود مكتمل"]
         cJsonResponse = list2json(aResult)
         oWebView.wreturn(id, 0, cJsonResponse)
     
     func debugCode cCode
-        return ["debug_info": "معلومات التصحيح للكود"]
+        return [:debug_info = "معلومات التصحيح للكود"]
 
