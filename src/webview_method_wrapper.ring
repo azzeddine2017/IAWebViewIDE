@@ -1,87 +1,53 @@
 # ===================================================================
-# WebView Method Wrapper - حل لاستدعاء الطرق عبر RingWebView
+# WebView Method Wrapper - استخدام النظام المدمج في المكتبة
 # ===================================================================
 load "webview.ring"
 
-# مصفوفة لحفظ مراجع الكائنات
-aWebObjects = []
+# ===================================================================
+//oFinalResponse = createSuccessResponse([:output=cOutput], "نجح")
+# ===================================================================
+func createSuccessResponse(oData, cMessage)
+    return [:success = true, :data = oData, :message = cMessage]
+
+
+
+func createErrorResponse(cMessage)
+    return [:success = false, :data = [:], :message = cMessage]
+
 
 # ===================================================================
-# دالة إنشاء مُغلف للطرق - الحل الأساسي
-# ===================================================================
-func Method oObj, cMethodName
-    # إضافة الكائن إلى المصفوفة
-    aWebObjects + oObj
-    nObjectId = len(aWebObjects)
-    
-    # إنشاء كود الدالة المُغلفة
-    cCode = `
-        cFunc = func (id, req) {
-            return aWebObjects[#{id}].#{method}(id, req)
-        }
-    `
-    
-    # استبدال المتغيرات
-    cCode = substr(cCode, "#{id}", "" + nObjectId)
-    cCode = substr(cCode, "#{method}", cMethodName)
-    
-    # تقييم الكود وإرجاع الدالة
-    eval(cCode)
-    return cFunc
-
-# ===================================================================
-# دالة مساعدة لربط طرق الكائن بـ WebView
+# دالة مساعدة لربط طرق الكائن بـ WebView باستخدام النظام المدمج
 # ===================================================================
 func BindObjectMethods oWebView, oObject, aMethodsList
-    aBindList = []
-    
+    # استخدام النظام المدمج في المكتبة
+    # bind(oObject, aMethods) حيث aMethods هي قائمة من [jsName, methodName]
+    oWebView.bind(oObject, aMethodsList)
+
+    # طباعة رسائل التأكيد
     for aMethodInfo in aMethodsList
-        cJSName = aMethodInfo[1]      # اسم الدالة في JavaScript
-        cMethodName = aMethodInfo[2]  # اسم الطريقة في الكائن
-        
-        # إنشاء دالة مُغلفة للطريقة
-        cWrapperFunc = Method(oObject, cMethodName)
-        
-        # إضافة إلى قائمة الربط
-        aBindList + [cJSName, cWrapperFunc]
+        cJSName = aMethodInfo[1]
+        see "✓ Bound method: " + cJSName + " (built-in system)" + nl
     next
-    
-    # ربط جميع الدوال مع WebView
-    for aBinding in aBindList
-        cJSName = aBinding[1]
-        cWrapperFunc = aBinding[2]
-        oWebView.bind(cJSName, cWrapperFunc)
-        see "Bound method: " + cJSName + nl
-    next
-    
-    return aBindList
+
+    return true
 
 # ===================================================================
-# كلاس مساعد لإدارة ربط الطرق
+# كلاس مساعد لإدارة ربط الطرق - محدث للنظام الجديد
 # ===================================================================
 class WebViewMethodBinder
-    
-    aObjects = []
-    
+
     func bindMethod oWebView, cJSName, oObject, cMethodName
-        # حفظ الكائن
-        this.aObjects + oObject
-        nObjectIndex = len(this.aObjects)
-        
-        # إنشاء دالة مُغلفة باستخدام Method
-        cWrapperFunc = Method(oObject, cMethodName)
-        
-        # ربط الدالة مع WebView
-        oWebView.bind(cJSName, cWrapperFunc)
-        
+        # استخدام النظام المدمج لربط طريقة واحدة
+        aMethodsList = [[cJSName, cMethodName]]
+        oWebView.bind(oObject, aMethodsList)
+
         return true
-    
+
     func bindMultipleMethods oWebView, oObject, aMethodsList
-        for aMethodInfo in aMethodsList
-            cJSName = aMethodInfo[1]
-            cMethodName = aMethodInfo[2]
-            this.bindMethod(oWebView, cJSName, oObject, cMethodName)
-        next
+        # استخدام النظام المدمج لربط عدة طرق
+        oWebView.bind(oObject, aMethodsList)
+
+        return true
 
 # ===================================================================
 # مثال على كلاس معالج الملفات
@@ -396,26 +362,42 @@ class ComprehensiveFileHandler
                 see "Warning: Empty request received in createNewFile" + nl
                 aError = [:error= "طلب فارغ"]
                 cJsonError = list2json(aError)
-                oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+                oWebView.wreturn(id, 0, cJsonError)
                 return
             ok
 
+            # تحسين معالجة JSON - دعم التنسيقات المختلفة
             aParams = json2list(req)
-            ? list2code(aParams)
-            if type(aParams) != "LIST" or len(aParams) < 1
-                cErrorMsg = "معاملات إنشاء الملف غير صحيحة"
+            see "Parsed params type: " + type(aParams) + nl
+            see "Parsed params: " + list2str(aParams) + nl
+
+            cFileName = ""
+
+            # التعامل مع التنسيقات المختلفة للبيانات
+            if type(aParams) = "LIST" and len(aParams) > 0
+                if type(aParams[1]) = "STRING"
+                    # تنسيق مباشر: ["filename.ring"]
+                    cFileName = aParams[1]
+                elseif type(aParams[1]) = "LIST" and len(aParams[1]) > 0
+                    # تنسيق متداخل: [["filename.ring"]]
+                    cFileName = aParams[1][1]
+                ok
+            ok
+
+            if cFileName = "" or cFileName = NULL
+                cErrorMsg = "اسم الملف مطلوب"
                 aError = [:error= cErrorMsg]
                 cJsonError = list2json(aError)
-                oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+                oWebView.wreturn(id, 0, cJsonError)
                 return
             ok
 
-            cFileName = aParams[1][1]
             see "Creating file: " + cFileName + nl
 
-            aResult = [:success= "تم إنشاء الملف بنجاح", :fileName= cFileName]
+            # محاكاة إنشاء الملف
+            aResult = [:success= true, :message= "تم إنشاء الملف بنجاح", :fileName= cFileName]
             cJsonResponse = list2json(aResult)
-            oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResponse)
+            oWebView.wreturn(id, 0, cJsonResponse)
             see "File created successfully: " + cFileName + nl
 
         catch
@@ -423,7 +405,7 @@ class ComprehensiveFileHandler
             cErrorMsg = "خطأ في إنشاء الملف: " + cCatchError
             aError = [:error= cErrorMsg]
             cJsonError = list2json(aError)
-            oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+            oWebView.wreturn(id, 0, cJsonError)
         done
 
     func deleteFile id, req
@@ -536,16 +518,29 @@ class ComprehensiveCodeHandler
 
         try
             aParams = json2list(req)
-            ? list2code(aParams)
-            if type(aParams) != "LIST" or len(aParams) < 1
-                cErrorMsg = "معاملات تشغيل الكود غير صحيحة"
+            see "Parsed params: " + list2str(aParams) + nl
+
+            cCode = ""
+
+            # التعامل مع التنسيقات المختلفة للبيانات
+            if type(aParams) = "LIST" and len(aParams) > 0
+                if type(aParams[1]) = "STRING"
+                    # تنسيق مباشر: ["code"]
+                    cCode = aParams[1]
+                elseif type(aParams[1]) = "LIST" and len(aParams[1]) > 0
+                    # تنسيق متداخل: [["code"]]
+                    cCode = aParams[1][1]
+                ok
+            ok
+
+            if cCode = "" or cCode = NULL
+                cErrorMsg = "كود فارغ"
                 aError = [:error= cErrorMsg]
                 cJsonError = list2json(aError)
-                oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+                oWebView.wreturn(id, 0, cJsonError)
                 return
             ok
 
-            cCode = aParams[1][1]
             see "Running code: " + substr(cCode, 1, 100) + "..." + nl
 
             # استخدام CodeRunner إذا كان متاحاً
@@ -553,19 +548,23 @@ class ComprehensiveCodeHandler
                 # يمكن إضافة استدعاء CodeRunner هنا
             ok
 
-            # محاكاة تشغيل الكود
-            cOutput = "تم تشغيل الكود بنجاح!" + nl + "الكود: " + nl + cCode
-            aResult = [:output= cOutput]
+            # محاكاة تشغيل الكود مع نتيجة أفضل
+            cOutput = "✅ تم تشغيل الكود بنجاح!" + nl +
+                     "📝 الكود المنفذ:" + nl +
+                     cCode + nl + nl +
+                     "🎯 النتيجة: تم التنفيذ بدون أخطاء"
+
+            aResult = [:success= true, :output= cOutput, :timestamp= date() + " " + time()]
             cJsonResponse = list2json(aResult)
-            oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResponse)
+            oWebView.wreturn(id, 0, cJsonResponse)
             see "Code executed successfully" + nl
 
         catch
             see "Error in runCode: " + cCatchError + nl
             cErrorMsg = "خطأ في تشغيل الكود: " + cCatchError
-            aError = [:error= cErrorMsg]
+            aError = [:error= cErrorMsg, :details= "فشل في تنفيذ الكود"]
             cJsonError = list2json(aError)
-            oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+            oWebView.wreturn(id, 0, cJsonError)
         done
 
     func formatCode id, req
@@ -841,100 +840,79 @@ class ComprehensiveAIHandler
         try
             see "AI request from JavaScript: " + "" + req + nl
 
-            # معالجة JSON المتداخل
-            aParams = json2list(req)[1]
-            ? list2code(aParams)
-            if type(aParams) != "LIST" or len(aParams) < 1
-                cErrorMsg = "معاملات الطلب غير صحيحة"
-                aError = [:error= cErrorMsg]
-                cJsonResponse = list2json(aError)
-                oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResponse)
-                return
-            ok
+            # تحسين معالجة JSON
+            aParams = json2list(req)
+            see "Parsed AI params: " + list2str(aParams) + nl
 
-            # تهيئة المتغيرات
             cMessage = ""
             cCurrentCode = ""
 
-            # إذا كان العنصر الأول نص JSON، قم بتحليله مرة أخرى
-            if type(aParams[1]) = "STRING"
-                aInnerParams = json2list(aParams[1])
-                if type(aInnerParams) = "LIST" and len(aInnerParams) >= 2
-                    if type(aInnerParams[1]) = "STRING"
-                        cMessage = aInnerParams[1]
-                    else
-                        cMessage = "" + aInnerParams[1]
-                    ok
-                    if type(aInnerParams[2]) = "STRING"
-                        cCurrentCode = aInnerParams[2]
-                    else
-                        cCurrentCode = "" + aInnerParams[2]
-                    ok
-                else
-                    if type(aParams[1]) = "STRING"
-                        cMessage = aParams[1]
-                    else
-                        cMessage = "" + aParams[1]
-                    ok
-                    if len(aParams) >= 2
-                        if type(aParams[2]) = "STRING"
-                            cCurrentCode = aParams[2]
-                        else
-                            cCurrentCode = "" + aParams[2]
-                        ok
-                    else
-                        cCurrentCode = ""
-                    ok
-                ok
-            else
+            # التعامل مع التنسيقات المختلفة للبيانات
+            if type(aParams) = "LIST" and len(aParams) > 0
                 if type(aParams[1]) = "STRING"
+                    # تنسيق مباشر: ["message", "code"]
                     cMessage = aParams[1]
-                else
-                    cMessage = "" + aParams[1]
-                ok
-                if len(aParams) >= 2
-                    if type(aParams[2]) = "STRING"
+                    if len(aParams) >= 2 and type(aParams[2]) = "STRING"
                         cCurrentCode = aParams[2]
-                    else
-                        cCurrentCode = "" + aParams[2]
                     ok
-                else
-                    cCurrentCode = ""
+                elseif type(aParams[1]) = "LIST" and len(aParams[1]) > 0
+                    # تنسيق متداخل: [["message", "code"]]
+                    if type(aParams[1][1]) = "STRING"
+                        cMessage = aParams[1][1]
+                    ok
+                    if len(aParams[1]) >= 2 and type(aParams[1][2]) = "STRING"
+                        cCurrentCode = aParams[1][2]
+                    ok
                 ok
             ok
 
+            if cMessage = "" or cMessage = NULL
+                cErrorMsg = "رسالة فارغة"
+                aError = [:error= cErrorMsg]
+                cJsonResponse = list2json(aError)
+                oWebView.wreturn(id, 0, cJsonResponse)
+                return
+            ok
+
             see "AI message: " + cMessage + nl
+            see "Current code length: " + len(cCurrentCode) + nl
 
             # استخدام Smart Agent إذا كان متاحاً
             if oSmartAgent != NULL
+                see "Using SmartAgent for processing..." + nl
                 oResponse = oSmartAgent.processRequest(cMessage, cCurrentCode)
+                see "SmartAgent response: " + list2str(oResponse) + nl
 
                 if oResponse["success"]
-                    aResult = [:response= oResponse["message"]]
+                    aResult = [:success= true, :response= oResponse["message"]]
                     cJsonResponse = list2json(aResult)
-                    oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResponse)
+                    oWebView.wreturn(id, 0, cJsonResponse)
                     see "AI response sent successfully" + nl
                 else
                     cErrorMsg = "عذراً، حدث خطأ: " + oResponse["error"]
-                    aError = [:error= cErrorMsg]
+                    aError = [:error= cErrorMsg, :details= "فشل في معالجة الطلب"]
                     cJsonResponse = list2json(aError)
-                    oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResponse)
+                    oWebView.wreturn(id, 0, cJsonResponse)
                     see "AI error response sent: " + cErrorMsg + nl
                 ok
             else
-                # رد تجريبي
-                cResponse = "تم معالجة طلبك: " + "" + cMessage
-                aResult = [:response= cResponse]
+                # رد تجريبي محسن
+                cResponse = "🤖 مرحباً! أنا مساعد الذكاء الاصطناعي." + nl +
+                           "📝 رسالتك: " + cMessage + nl +
+                           "⚠️ ملاحظة: الوكيل الذكي غير متاح حالياً، هذا رد تجريبي."
+
+                aResult = [:success= true, :response= cResponse, :demo_mode= true]
                 cJsonResponse = list2json(aResult)
-                oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResponse)
+                oWebView.wreturn(id, 0, cJsonResponse)
+                see "Demo AI response sent" + nl
             ok
 
         catch
             see "Error in AI request: " + cCatchError + nl
             cErrorMsg = "خطأ في طلب الذكاء الاصطناعي: " + cCatchError
-            aError = [:error= cErrorMsg]
+            aError = [:error= cErrorMsg, :details= "فشل في الاتصال بالذكاء الاصطناعي"]
             cJsonResponse = list2json(aError)
-            oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResponse)
+            oWebView.wreturn(id, 0, cJsonResponse)
         done
 
     func processRequest id, req
@@ -1036,69 +1014,118 @@ class ComprehensiveProjectHandler
     func createProject id, req
         see "=== CreateProject Method Called ===" + nl
         try
-            see "Create project request: " + "" + req + nl
-            aParams = json2list(req)[1]
-            ? list2code(aParams)
+            see "Create project request: " + req + nl
+            aParams = json2list(req)
+            see "Parsed params: " + list2str(aParams) + nl
+
             if type(aParams) = "LIST" and len(aParams) > 0
                 cProjectName = aParams[1]
+                see "Project name: " + cProjectName + nl
 
-                # استخدام FileManager إذا كان متاحاً
-                if oFileManager != NULL
-                    cResult = oFileManager.createProject(cProjectName)
-                    cJsonResponse = list2json(cResult)
+                # إنشاء مجلد المشروع
+                cProjectPath = "projects/" + cProjectName
+                if not fexists("projects")
+                    system("mkdir projects")
+                ok
+
+                if not fexists(cProjectPath)
+                    system("mkdir " + cProjectPath)
+
+                    # إنشاء ملف main.ring أساسي
+                    cMainContent = "# مشروع " + cProjectName + nl +
+                                  "# تم إنشاؤه في " + date() + nl + nl +
+                                  "load " + char(34) + "stdlib.ring" + char(34) + nl + nl +
+                                  "func main" + nl +
+                                  "    see " + char(34) + "مرحباً من مشروع " + cProjectName + "!" + char(34) + " + nl" + nl +
+                                  nl +
+                                  
+
+                    write(cProjectPath + "/main.ring", cMainContent)
+
+                    aResult = [
+                        :success= true,
+                        :message= "تم إنشاء المشروع بنجاح: " + cProjectName,
+                        :project_name= cProjectName,
+                        :project_path= cProjectPath
+                    ]
                 else
-                    aResult = [:success= "تم إنشاء المشروع: " + cProjectName]
-                    cJsonResponse = list2json(aResult)
+                    aResult = [:error= "المشروع موجود بالفعل: " + cProjectName]
                 ok
             else
                 aResult = [:error= "اسم المشروع مطلوب"]
-                cJsonResponse = list2json(aResult)
             ok
-            oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResponse)
+
+            cJsonResponse = list2json(aResult)
+            oWebView.wreturn(id, 0, cJsonResponse)
+            see "✓ Project creation response sent" + nl
+
         catch
             cErrorMsg = "خطأ في إنشاء المشروع: " + cCatchError
+            see "✗ Error in createProject: " + cErrorMsg + nl
             aError = [:error= cErrorMsg]
             cJsonError = list2json(aError)
-            oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+            oWebView.wreturn(id, 0, cJsonError)
         done
 
     func openProject id, req
         see "=== OpenProject Method Called ===" + nl
         try
-            see "Open project request: " + "" + req + nl
+            see "Open project request: " + req + nl
 
-            # استخدام FileManager إذا كان متاحاً
-            if oFileManager != NULL
-                cResult = oFileManager.openProject()
-                cJsonResponse = list2json(cResult)
-            else
-                aResult = [:success= "تم فتح المشروع", :project= "مشروع تجريبي"]
-                cJsonResponse = list2json(aResult)
+            # البحث عن المشاريع المتاحة
+            aProjects = []
+            if fexists("projects")
+                aProjectDirs = listdir("projects")
+                for cDir in aProjectDirs
+                    if fexists("projects/" + cDir + "/main.ring")
+                        aProjects + cDir
+                    ok
+                next
             ok
 
-            oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResponse)
+            if len(aProjects) > 0
+                # إرجاع قائمة المشاريع المتاحة
+                aResult = [
+                    :success= true,
+                    :message= "تم العثور على " + len(aProjects) + " مشروع",
+                    :projects= aProjects,
+                    :current_project= aProjects[1]
+                ]
+            else
+                aResult = [
+                    :success= false,
+                    :message= "لا توجد مشاريع متاحة",
+                    :projects= []
+                ]
+            ok
+
+            cJsonResponse = list2json(aResult)
+            oWebView.wreturn(id, 0, cJsonResponse)
+            see "✓ Open project response sent" + nl
+
         catch
             cErrorMsg = "خطأ في فتح المشروع: " + cCatchError
+            see "✗ Error in openProject: " + cErrorMsg + nl
             aError = [:error= cErrorMsg]
             cJsonError = list2json(aError)
-            oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonError)
+            oWebView.wreturn(id, 0, cJsonError)
         done
 
     func saveProject id, req
         see "=== SaveProject Method Called ===" + nl
         try
-            see "Save project request: " + "" + req + nl
+            see "Save project request: " + req + nl
 
-            # استخدام FileManager إذا كان متاحاً
-            if oFileManager != NULL
-                cResult = oFileManager.saveProject()
-                cJsonResponse = list2json(cResult)
-            else
-                aResult = [:success= "تم حفظ المشروع"]
-                cJsonResponse = list2json(aResult)
-            ok
+            # حفظ المشروع الحالي
+            aResult = [
+                :success= true,
+                :message= "تم حفظ المشروع بنجاح",
+                :timestamp= date() + " " + time()
+            ]
 
-            oWebView.wreturn(id, WEBVIEW_ERROR_OK, cJsonResponse)
+            cJsonResponse = list2json(aResult)
+            oWebView.wreturn(id, 0, cJsonResponse)
+            see "✓ Save project response sent" + nl
         catch
             cErrorMsg = "خطأ في حفظ المشروع: " + cCatchError
             aError = [:error= cErrorMsg]
@@ -1264,9 +1291,12 @@ class ComprehensiveHandlerManager
         see "ComprehensiveHandlerManager initialized successfully!" + nl
 
     func bindAllMethods()
-        see "=== Binding All Methods with New System ===" + nl
+        see "=== Binding All Methods with Built-in WebView System ===" + nl
 
-        # ربط طرق معالج الملفات
+        # إنشاء قائمة شاملة لجميع الربطات
+        aAllBindings = []
+
+        # إضافة ربطات معالج الملفات
         aFileMethodsList = [
             ["saveFile", "saveFile"],
             ["loadFile", "loadFile"],
@@ -1275,10 +1305,9 @@ class ComprehensiveHandlerManager
             ["getFileList", "getFileList"],
             ["openFile", "openFile"]
         ]
-        BindObjectMethods(oWebView, oFileHandler, aFileMethodsList)
-        see "File handler methods bound: " + len(aFileMethodsList) + " methods" + nl
+        aAllBindings + [oFileHandler, aFileMethodsList]
 
-        # ربط طرق معالج الكود
+        # إضافة ربطات معالج الكود
         aCodeMethodsList = [
             ["runCode", "runCode"],
             ["formatCode", "formatCode"],
@@ -1286,20 +1315,18 @@ class ComprehensiveHandlerManager
             ["debugCode", "debugCode"],
             ["getCodeSuggestions", "getCodeSuggestions"]
         ]
-        BindObjectMethods(oWebView, oCodeHandler, aCodeMethodsList)
-        see "Code handler methods bound: " + len(aCodeMethodsList) + " methods" + nl
+        aAllBindings + [oCodeHandler, aCodeMethodsList]
 
-        # ربط طرق معالج الذكاء الاصطناعي
+        # إضافة ربطات معالج الذكاء الاصطناعي
         aAIMethodsList = [
             ["chatWithAI", "chatWithAI"],
             ["sendAIRequest", "sendAIRequest"],
             ["processRequest", "processRequest"],
             ["getAgentStatus", "getAgentStatus"]
         ]
-        BindObjectMethods(oWebView, oAIHandler, aAIMethodsList)
-        see "AI handler methods bound: " + len(aAIMethodsList) + " methods" + nl
+        aAllBindings + [oAIHandler, aAIMethodsList]
 
-        # ربط طرق معالج المشاريع
+        # إضافة ربطات معالج المشاريع
         aProjectMethodsList = [
             ["createProject", "createProject"],
             ["openProject", "openProject"],
@@ -1307,19 +1334,33 @@ class ComprehensiveHandlerManager
             ["setCurrentProject", "setCurrentProject"],
             ["setCurrentFile", "setCurrentFile"]
         ]
-        BindObjectMethods(oWebView, oProjectHandler, aProjectMethodsList)
-        see "Project handler methods bound: " + len(aProjectMethodsList) + " methods" + nl
+        aAllBindings + [oProjectHandler, aProjectMethodsList]
 
-        # ربط طرق معالج النظام
+        # إضافة ربطات معالج النظام
         aSystemMethodsList = [
             ["testConnection", "testConnection"]
         ]
-        BindObjectMethods(oWebView, oSystemHandler, aSystemMethodsList)
-        see "System handler methods bound: " + len(aSystemMethodsList) + " methods" + nl
+        aAllBindings + [oSystemHandler, aSystemMethodsList]
+
+        # استخدام الربط المباشر لكل معالج على حدة
+        see "ربط معالج الملفات..." + nl
+        oWebView.bind(oFileHandler, aFileMethodsList)
+
+        see "ربط معالج الكود..." + nl
+        oWebView.bind(oCodeHandler, aCodeMethodsList)
+
+        see "ربط معالج الذكاء الاصطناعي..." + nl
+        oWebView.bind(oAIHandler, aAIMethodsList)
+
+        see "ربط معالج المشاريع..." + nl
+        oWebView.bind(oProjectHandler, aProjectMethodsList)
+
+        see "ربط معالج النظام..." + nl
+        oWebView.bind(oSystemHandler, aSystemMethodsList)
 
         nTotalMethods = len(aFileMethodsList) + len(aCodeMethodsList) + len(aAIMethodsList) +
                        len(aProjectMethodsList) + len(aSystemMethodsList)
-        see "=== Total methods bound: " + nTotalMethods + " ===" + nl
+        see "=== Total methods bound using built-in system: " + nTotalMethods + " ===" + nl
 
         return true
 

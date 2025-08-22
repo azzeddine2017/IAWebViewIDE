@@ -15,8 +15,10 @@ oWebView {
     bind("testFunction", :testFunction)
     bind("createProject", :createProject)
     bind("saveFile", :saveFile)
-    
-    setHtml(`
+    # Navigate the webview to a local HTML file.
+	# Prepend "file://" to the absolute path for local file access.
+	navigate("file://" + currentdir() + "/assets/html/SimpleButton.html")
+   /* setHtml(`
         <!DOCTYPE html>
         <html dir="rtl" lang="ar">
         <head>
@@ -100,7 +102,7 @@ oWebView {
             </script>
         </body>
         </html>
-    `)
+    `)*/
     
     run()
 }

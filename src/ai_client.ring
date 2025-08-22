@@ -4,7 +4,7 @@
 
 load "jsonlib.ring"
 load "stdlib.ring"
-load "internetlib.ring"
+load "http_client.ring"
 
 class AIClient
     
@@ -15,7 +15,7 @@ class AIClient
     cCurrentProvider = "gemini"  # Default provider
     
     # API Endpoints
-    cGeminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+    cGeminiEndpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
     cOpenAIEndpoint = "https://api.openai.com/v1/chat/completions"
     cClaudeEndpoint = "https://api.anthropic.com/v1/messages"
     
@@ -39,30 +39,29 @@ class AIClient
             if fexists("config/api_keys.json")
                 cConfigContent = read("config/api_keys.json")
                 oConfig = json2list(cConfigContent)
-
                 if type(oConfig) = "LIST" and len(oConfig) > 0
                     oKeys = oConfig[1]
                     if type(oKeys) = "LIST"
                         # Load API keys with correct field names
                         oGemini = getValue(oKeys, "gemini", [])
                         if type(oGemini) = "LIST"
-                            cGeminiAPIKey = getValue(oGemini, "api_key", "")
+                            cGeminiAPIKey = oGemini["api_key"]
                         ok
 
                         oOpenAI = getValue(oKeys, "openai", [])
                         if type(oOpenAI) = "LIST"
-                            cOpenAIAPIKey = getValue(oOpenAI, "api_key", "")
+                            cOpenAIAPIKey = oOpenAI["api_key"]
                         ok
 
                         oClaude = getValue(oKeys, "claude", [])
                         if type(oClaude) = "LIST"
-                            cClaudeAPIKey = getValue(oClaude, "api_key", "")
+                            cClaudeAPIKey = oClaude["api_key"]
                         ok
 
-                        cCurrentProvider = getValue(oKeys, "default_provider", "gemini")
-                        nMaxTokens = getValue(oKeys, "max_tokens", 4000)
-                        nTemperature = getValue(oKeys, "temperature", 0.7)
-                        nTimeout = getValue(oKeys, "timeout", 30)
+                        cCurrentProvider = oKeys[1]["default_provider"]
+                        nMaxTokens = oKeys[1]["max_tokens"]
+                        nTemperature = oKeys[1]["temperature"]
+                        nTimeout = oKeys[1]["timeout"]
                     ok
                 ok
             else
@@ -89,7 +88,7 @@ class AIClient
                 "default_provider" = "gemini"
             ]
             
-            cConfigJSON = list2json([oDefaultConfig])
+            cConfigJSON = list2json(oDefaultConfig)
             write("config/api_keys.json", cConfigJSON)
             
             see "Created default configuration file: config/api_keys.json" + nl
@@ -113,6 +112,12 @@ class AIClient
         ok
     
     # ===================================================================
+    # Send Request (Main Entry Point)
+    # ===================================================================
+    func sendRequest(cMessage)
+        return sendChatRequest(cMessage, "", [])
+
+    # ===================================================================
     # Send Chat Request
     # ===================================================================
     func sendChatRequest(cMessage, cSystemPrompt, aContext)
@@ -127,7 +132,7 @@ class AIClient
                 other
                     return createErrorResponse("Invalid AI provider: " + cCurrentProvider)
             off
-            
+
         catch
             return createErrorResponse("Error in AI request: " + cCatchError)
         done
@@ -136,39 +141,49 @@ class AIClient
     # Send Gemini Request
     # ===================================================================
     func sendGeminiRequest(cMessage, cSystemPrompt, aContext)
-        if cGeminiAPIKey = ""
-            return createErrorResponse("Gemini API key not configured")
+        if cGeminiAPIKey = "" or cGeminiAPIKey = "YOUR_GEMINI_API_KEY_HERE"
+            see "No valid Gemini API key, using demo response" + nl
+            return createSuccessResponse("🤖 مرحباً! أنا في الوضع التجريبي. رسالتك: " + cMessage + nl +
+                                       "للحصول على ردود حقيقية، يرجى إضافة مفتاح API صحيح في config/api_keys.json")
         ok
-        
+
         try
+            see "Sending request to Gemini API..." + nl
+
             # Build request payload
             cFullPrompt = buildContextualPrompt(cMessage, cSystemPrompt, aContext)
-            
+
             oRequestData = [
-                "contents" = [
+                :contents = [
                     [
-                        "parts" = [
-                            ["text" = cFullPrompt]
+                        :parts = [
+                            [
+                                :text = cFullPrompt
+                            ]
                         ]
                     ]
                 ],
-                "generationConfig" = [
-                    "temperature" = nTemperature,
-                    "maxOutputTokens" = nMaxTokens
+                :generationConfig = [
+                    :temperature = nTemperature,
+                    :maxOutputTokens = nMaxTokens
                 ]
             ]
-            
+
             cRequestJSON = list2json(oRequestData)
             cURL = cGeminiEndpoint + "?key=" + cGeminiAPIKey
-            
+
+            see "Request URL: " + substr(cURL, 1, 80) + "..." + nl
+            see "Request data length: " + len(cRequestJSON) + nl
+
             # Send HTTP request
             cResponse = sendHTTPRequest(cURL, cRequestJSON, "POST", [
                 "Content-Type: application/json"
             ])
-            
+
             return parseGeminiResponse(cResponse)
-            
+
         catch
+            see "Gemini request failed: " + cCatchError + nl
             return createErrorResponse("Gemini request failed: " + cCatchError)
         done
     
@@ -317,68 +332,64 @@ class AIClient
     
     func createErrorResponse(cError)
         return [
-            "success" = false,
-            "error" = cError,
-            "content" = "عذراً، حدث خطأ في الاتصال بخدمة الذكاء الاصطناعي: " + cError
+            :success = false,
+            :error = cError,
+            :message = "عذراً، حدث خطأ في الاتصال بخدمة الذكاء الاصطناعي: " + cError
         ]
-    
+
     func createSuccessResponse(cContent)
         return [
-            "success" = true,
-            "error" = "",
-            "content" = cContent
+            :success = true,
+            :error = "",
+            :message = cContent
         ]
 
     # ===================================================================
-    # HTTP Request Function
+    # HTTP Request Function - Using SimpleHTTPClient
     # ===================================================================
     func sendHTTPRequest(cURL, cData, cMethod, aHeaders)
         try
-            # Use Ring's internet library for HTTP requests
-            cCommand = buildCurlCommand(cURL, cData, cMethod, aHeaders)
-            see "Executing command: " + cCommand + nl
-            cResponse = systemcmd(cCommand)
+            see "Sending HTTP request to: " + cURL + nl
+            see "Method: " + cMethod + nl
+            see "Data length: " + len(cData) + " characters" + nl
 
-            # Clean up temporary file if it exists
-            if fexists("temp_request.json")
-                remove("temp_request.json")
+            # إنشاء عميل HTTP بسيط
+            oClient = new HTTPClient()
+            oClient.setTimeout(nTimeout)
+            oClient.setVerifySSL(false)
+
+            # إرسال الطلب حسب النوع
+            oResponse = NULL
+            switch upper(cMethod)
+                on "GET"
+                    oResponse = oClient.getrequest(cURL, aHeaders)
+                on "POST"
+                    oResponse = oClient.post(cURL, cData, aHeaders)
+                other
+                    oResponse = oClient.request(cMethod, cURL, aHeaders, cData)
+            off
+
+            # تنظيف الموارد
+            oClient.cleanup()
+
+            # التحقق من نجاح الطلب
+            if oResponse != NULL and oResponse[:success]
+                see "HTTP request successful - Status: " + oResponse[:status_code] + nl
+                return oResponse[:content]
+            elseif oResponse != NULL and oResponse[:error] != NULL and oResponse[:error] != ""
+                see "HTTP request failed: " + oResponse[:error] + nl
+                return '{"error": "HTTP request failed: ' + oResponse[:error] + '"}'
+            else
+                see "HTTP request failed with status: " + oResponse[:status_code] + nl
+                return '{"error": "HTTP request failed with status code: ' + oResponse[:status_code] + '"}'
             ok
-
-            see "API Response: " + left(cResponse, 200) + "..." + nl
-            return cResponse
 
         catch
-            # Clean up temporary file if it exists
-            if fexists("temp_request.json")
-                remove("temp_request.json")
-            ok
+            see "HTTP request error: " + cCatchError + nl
             return '{"error": "HTTP request failed: ' + cCatchError + '"}'
         done
 
-    # ===================================================================
-    # Build cURL Command
-    # ===================================================================
-    func buildCurlCommand(cURL, cData, cMethod, aHeaders)
-        cCommand = "curl -s -X " + cMethod + " "
 
-        # Add headers
-        if type(aHeaders) = "LIST"
-            for cHeader in aHeaders
-                cCommand += '-H "' + cHeader + '" '
-            next
-        ok
-
-        # Add data for POST requests
-        if cMethod = "POST" and cData != ""
-            # Write data to temporary file to avoid command line issues
-            cTempFile = "temp_request.json"
-            write(cTempFile, cData)
-            cCommand += '-d @' + cTempFile + ' '
-        ok
-
-        cCommand += '"' + cURL + '"'
-
-        return cCommand
 
     # ===================================================================
     # Parse Gemini Response

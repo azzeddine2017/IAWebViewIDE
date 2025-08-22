@@ -1,0 +1,228 @@
+ <!DOCTYPE html>
+            <html dir="rtl" lang="ar">
+            <head>
+                <meta charset="UTF-8">
+                <title>اختبار الذكاء الاصطناعي</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        margin: 0;
+                        padding: 20px;
+                        background: #f0f2f5;
+                    }
+                    .container {
+                        max-width: 800px;
+                        margin: 0 auto;
+                        background: white;
+                        border-radius: 10px;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                        padding: 20px;
+                    }
+                    .messages {
+                        height: 400px;
+                        overflow-y: auto;
+                        padding: 15px;
+                        border: 1px solid #ddd;
+                        border-radius: 8px;
+                        margin-bottom: 20px;
+                        background: #fafafa;
+                    }
+                    .message {
+                        margin: 10px 0;
+                        padding: 12px;
+                        border-radius: 10px;
+                        max-width: 85%;
+                        white-space: pre-wrap;
+                    }
+                    .user-message {
+                        background: #0084ff;
+                        color: white;
+                        margin-left: auto;
+                    }
+                    .ai-message {
+                        background: #e8f5e8;
+                        margin-right: auto;
+                        border-left: 4px solid #4CAF50;
+                    }
+                    .system-message {
+                        background: #fff3cd;
+                        margin: 5px auto;
+                        text-align: center;
+                        border-left: 4px solid #ffc107;
+                        font-size: 14px;
+                    }
+                    .input-container {
+                        display: flex;
+                        gap: 10px;
+                        margin-bottom: 15px;
+                    }
+                    input {
+                        flex: 1;
+                        padding: 12px;
+                        border: 1px solid #ddd;
+                        border-radius: 6px;
+                        font-size: 16px;
+                    }
+                    button {
+                        padding: 12px 20px;
+                        background: #0084ff;
+                        color: white;
+                        border: none;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-size: 14px;
+                    }
+                    
+                    /* تنسيق النص العريض */
+                    strong {
+                        font-weight: 700;
+                        color: #1d2129;
+                    }
+
+                    /* تنسيق النص المائل */
+                    em {
+                        font-style: italic;
+                        color: #4b4f56;
+                    }
+
+                    /* تنسيق النص المشطوب */
+                    s {
+                        text-decoration: line-through;
+                        color: #90949c;
+                    }
+
+                    /* تنسيق الكود المضمن (inline code) */
+                    code {
+                        background-color: #f0f2f5;
+                        padding: 2px 6px;
+                        border-radius: 4px;
+                        font-family: 'Courier New', Courier, monospace;
+                        font-size: 0.9em;
+                    }
+                    pre {
+                        background: #2d2d2d;
+                        color: #f8f8f2;
+                        padding: 15px;
+                        border-radius: 8px;
+                        border: 1px solid #444;
+                        font-family: 'Courier New', Courier, monospace;
+                        white-space: pre-wrap;
+                        direction: ltr;
+                        text-align: left;
+                        overflow-x: auto;
+                    }
+                    button:hover {
+                        background: #0073e6;
+                    }
+                    .test-btn {
+                        background: #28a745;
+                        margin-left: 10px;
+                    }
+                    .test-btn:hover {
+                        background: #218838;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>🤖 اختبار الذكاء الاصطناعي</h1>
+                    
+                    <div class="messages" id="messages">
+                        <div class="message system-message">
+                            مرحباً! هذا اختبار للاتصال بالذكاء الاصطناعي
+                        </div>
+                    </div>
+                    
+                    <div class="input-container">
+                        <input type="text" id="messageInput" placeholder="اكتب سؤالك هنا..." 
+                                onkeypress="if(event.key === 'Enter') sendMessage()">
+                        <button onclick="sendMessage()">إرسال</button>
+                        <button class="test-btn" onclick="testAIConnection()">اختبار الاتصال</button>
+                    </div>
+                </div>
+
+                <script>
+                    async function sendMessage() {
+                        const input = document.getElementById('messageInput');
+                        const message = input.value.trim();
+                        
+                        if (!message) return;
+                        
+                        // إضافة رسالة المستخدم
+                        addMessage('👤 أنت: ' + message, 'user-message');
+                        input.value = '';
+                        
+                        try {
+                            // استدعاء دالة Ring
+                            console.log('Calling sendAIMessage with:', message);
+                            const response = await window.sendAIMessage(message);
+                            console.log('AI Response:', response);
+            
+                            addMessage('🤖 الذكاء الاصطناعي: ' + response, 'ai-message');
+                        } catch (error) {
+                            console.error('Error:', error);
+                            addMessage('❌ عذراً، حدث خطأ: ' + error.message, 'system-message');
+                        }
+                    }
+
+                    async function testAIConnection() {
+                        addMessage('🔄 جاري اختبار الاتصال...', 'system-message');
+                        
+                        try {
+                            const result = await window.testConnection('test');
+                            addMessage('✅ نتيجة الاختبار: ' + result, 'system-message');
+                        } catch (error) {
+                            addMessage('❌ فشل الاختبار: ' + error.message, 'system-message');
+                        }
+                    }
+
+                    function addMessage(text, className) {
+                        const messages = document.getElementById('messages');
+                        const div = document.createElement('div');
+                        div.className = 'message ' + className;
+
+                        // 1. الأمان: تهيئة محارف HTML الأساسية أولاً
+                        let safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+                        // 2. معالجة كتل الكود (```...```) أولاً لتحييدها
+                        let formattedText = safeText.replace(/```([\s\S]*?)```/g, function(match, codeContent) {
+                            let originalCode = codeContent.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+                            return `<pre>${originalCode.trim()}</pre>`;
+                        });
+
+                        // 3. تطبيق قواعد الماركداون البسيطة على النص المتبقي
+                        //    الترتيب مهم هنا!
+                        
+                        // النص العريض (**text**)
+                        formattedText = formattedText.replace(/\*\*([^\*]+)\*\*/g, '<strong>$1</strong>');
+                        
+                        // النص المائل (*text*)
+                        formattedText = formattedText.replace(/\*([^\*]+)\*/g, '<em>$1</em>');
+                        
+                        // النص المشطوب (~~text~~)
+                        formattedText = formattedText.replace(/~~(.*?)~~/g, '<s>$1</s>');
+                        
+                        // الكود المضمن (`code`)
+                        formattedText = formattedText.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+                        // 4. استبدال الأسطر الجديدة بـ <br> في النص الذي ليس كودًا
+                        formattedText = formattedText.replace(/(<pre>[\s\S]*?<\/pre>)|(\n)/g, function(match, preBlock, newline) {
+                            if (preBlock) return preBlock; // اترك كتل الكود كما هي
+                            if (newline) return '<br>';    // حول الأسطر الجديدة إلى <br>
+                            return match;
+                        });
+
+                        div.innerHTML = formattedText;
+                        messages.appendChild(div);
+                        messages.scrollTop = messages.scrollHeight;
+                    }
+                    
+                    // اختبار تلقائي عند التحميل
+                    window.addEventListener('load', function() {
+                        console.log('Page loaded, testing functions...');
+                        console.log('sendAIMessage available:', typeof window.sendAIMessage);
+                        console.log('testConnection available:', typeof window.testConnection);
+                    });
+                </script>
+            </body>
+            </html>

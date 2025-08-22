@@ -1,7 +1,7 @@
 {
     "gemini": {
-        "api_key": "AIzaSyCDt644306ilaKtzNN8BNSZqZ5kbdtlCAE",
-        "base_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+        "api_key": "AIzaSyB2jSL9mLKt-ACIOTJR5fT0qJHlPYp_K4w",
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
         "model": "gemini-pro",
         "enabled": true
     },

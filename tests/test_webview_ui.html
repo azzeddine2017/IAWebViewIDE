@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار ربط WebView</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn.success {
+            background: #28a745;
+        }
+        .btn.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn.danger {
+            background: #dc3545;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        .input-group input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 اختبار ربط WebView</h1>
+        
+        <div class="section">
+            <h3>اختبار الدوال الأساسية</h3>
+            
+            <div class="input-group">
+                <label>اسم الملف:</label>
+                <input type="text" id="testFileName" value="test.ring" placeholder="اسم الملف">
+            </div>
+            
+            <button class="btn" onclick="testCreateFile()">إنشاء ملف</button>
+            <button class="btn success" onclick="testSaveFile()">حفظ ملف</button>
+            <button class="btn warning" onclick="testConnection()">اختبار الاتصال</button>
+            <button class="btn danger" onclick="testRunCode()">تشغيل كود</button>
+        </div>
+        
+        <div class="section">
+            <h3>اختبار الذكاء الاصطناعي</h3>
+            <button class="btn" onclick="testAI()">اختبار الذكاء الاصطناعي</button>
+        </div>
+        
+        <div class="result" id="result">
+            <strong>النتائج ستظهر هنا...</strong>
+        </div>
+    </div>
+
+    <script>
+        // دالة لعرض النتائج
+        function showResult(message, isError = false) {
+            const resultDiv = document.getElementById('result');
+            const timestamp = new Date().toLocaleTimeString('en-EN');
+            const color = isError ? '#dc3545' : '#28a745';
+            resultDiv.innerHTML = `<strong style="color: ${color}">[${timestamp}] ${message}</strong>`;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        // اختبار إنشاء ملف
+        async function testCreateFile() {
+            const fileName = document.getElementById('testFileName').value || 'test.ring';
+            showResult('جاري اختبار إنشاء الملف...');
+            
+            try {
+                console.log('Testing createNewFile function...');
+                console.log('Available functions:', Object.keys(window).filter(key => typeof window[key] === 'function'));
+                
+                if (typeof window.createNewFile === 'function') {
+                    console.log('createNewFile function found');
+                    const params = [fileName];
+                    const result = await window.createNewFile(JSON.stringify(params));
+                    console.log('Result:', result);
+                    showResult(`نجح إنشاء الملف: ${fileName} - النتيجة: ${JSON.stringify(result)}`);
+                } else {
+                    showResult('دالة createNewFile غير موجودة!', true);
+                    console.error('createNewFile function not found');
+                }
+            } catch (error) {
+                showResult(`خطأ في إنشاء الملف: ${error.message}`, true);
+                console.error('Error:', error);
+            }
+        }
+
+        // اختبار حفظ ملف
+        async function testSaveFile() {
+            const fileName = document.getElementById('testFileName').value || 'test.ring';
+            showResult('جاري اختبار حفظ الملف...');
+            
+            try {
+                if (typeof window.saveFile === 'function') {
+                    const params = [fileName, 'see "Hello World!" + nl'];
+                    const result = await window.saveFile(JSON.stringify(params));
+                    showResult(`نجح حفظ الملف: ${fileName} - النتيجة: ${JSON.stringify(result)}`);
+                } else {
+                    showResult('دالة saveFile غير موجودة!', true);
+                }
+            } catch (error) {
+                showResult(`خطأ في حفظ الملف: ${error.message}`, true);
+            }
+        }
+
+        // اختبار الاتصال
+        async function testConnection() {
+            showResult('جاري اختبار الاتصال...');
+            
+            try {
+                if (typeof window.testConnection === 'function') {
+                    const result = await window.testConnection('[]');
+                    showResult(`نجح اختبار الاتصال - النتيجة: ${JSON.stringify(result)}`);
+                } else {
+                    showResult('دالة testConnection غير موجودة!', true);
+                }
+            } catch (error) {
+                showResult(`خطأ في اختبار الاتصال: ${error.message}`, true);
+            }
+        }
+
+        // اختبار تشغيل الكود
+        async function testRunCode() {
+            showResult('جاري اختبار تشغيل الكود...');
+            
+            try {
+                if (typeof window.runCode === 'function') {
+                    const params = ['see "Hello from Ring!" + nl'];
+                    const result = await window.runCode(JSON.stringify(params));
+                    showResult(`نجح تشغيل الكود - النتيجة: ${JSON.stringify(result)}`);
+                } else {
+                    showResult('دالة runCode غير موجودة!', true);
+                }
+            } catch (error) {
+                showResult(`خطأ في تشغيل الكود: ${error.message}`, true);
+            }
+        }
+
+        // اختبار الذكاء الاصطناعي
+        async function testAI() {
+            showResult('جاري اختبار الذكاء الاصطناعي...');
+            
+            try {
+                if (typeof window.chatWithAI === 'function') {
+                    const params = ['مرحباً', 'see "Hello World!"'];
+                    const result = await window.chatWithAI(JSON.stringify(params));
+                    showResult(`نجح اختبار الذكاء الاصطناعي - النتيجة: ${JSON.stringify(result)}`);
+                } else {
+                    showResult('دالة chatWithAI غير موجودة!', true);
+                }
+            } catch (error) {
+                showResult(`خطأ في اختبار الذكاء الاصطناعي: ${error.message}`, true);
+            }
+        }
+
+        // عند تحميل الصفحة
+        window.addEventListener('load', function() {
+            showResult('تم تحميل الصفحة بنجاح. جاهز للاختبار!');
+            
+            // عرض الدوال المتاحة
+            const availableFunctions = Object.keys(window).filter(key => 
+                typeof window[key] === 'function' && 
+                (key.includes('File') || key.includes('Code') || key.includes('AI') || key.includes('test') || key.includes('Connection'))
+            );
+            
+            if (availableFunctions.length > 0) {
+                console.log('Available Ring functions:', availableFunctions);
+                showResult(`الدوال المتاحة: ${availableFunctions.join(', ')}`);
+            } else {
+                showResult('لم يتم العثور على دوال Ring!', true);
+            }
+        });
+    </script>
+</body>
+</html>

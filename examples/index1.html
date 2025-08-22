@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ring Gemini Bot v2.4</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* --- نفس كود CSS بدون أي تغيير --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Tajawal:wght@400;500;700&display=swap');
+        :root {
+            --bg-color: #e5ddd5; --bg-image: url('https://i.pinimg.com/originals/97/c0/0e/97c00e6242483875335e21b8141663f5.jpg');
+            --card-bg-color: rgba(240, 242, 245, 0.9); --header-bg-color: #f0f2f5; --footer-bg-color: #f0f2f5;
+            --border-color: rgba(0, 0, 0, 0.1); --user-bubble-bg: linear-gradient(135deg, #dcf8c6, #c5eab3);
+            --bot-bubble-bg: #ffffff; --text-primary: #111b21; --text-secondary: #667781;
+            --accent-green: #008069; --icon-color: #54656f;
+        }
+        html[data-theme="dark"] {
+            --bg-color: #0c141a; --bg-image: none; --card-bg-color: rgba(17, 27, 33, 0.8);
+            --header-bg-color: #202c33; --footer-bg-color: #111b21; --border-color: rgba(255, 255, 255, 0.15);
+            --user-bubble-bg: linear-gradient(135deg, #005c4b, #008069); --bot-bubble-bg: #202c33;
+            --text-primary: #e9edef; --text-secondary: #8696a0; --accent-green: #00a884; --icon-color: #aebac1;
+        }
+        body { font-family: 'Inter', sans-serif; margin: 0; height: 100vh; overflow: hidden; background-color: var(--bg-color);
+                background-image: var(--bg-image); background-size: cover; background-position: center; display: flex;
+                align-items: center; justify-content: center; padding: 1em; box-sizing: border-box; transition: background-color 0.5s ease; }
+        html[lang="ar"] body { font-family: 'Tajawal', sans-serif; }
+        .chat-window { width: 100%; height: 100%; max-width: 450px; max-height: 95vh; display: flex; flex-direction: column;
+                        background-color: var(--card-bg-color); border-radius: 16px; border: 1px solid var(--border-color);
+                        backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+                        animation: fadeIn 0.5s ease-out; overflow: hidden; }
+        .chat-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;
+                        background-color: var(--header-bg-color); flex-shrink: 0; }
+        .header-title { display: flex; align-items: center; gap: 1em; }
+        .header-title i { font-size: 1.5em; color: var(--accent-green); }
+        .header-title h2 { margin: 0; font-size: 1.1em; font-weight: 500; color: var(--text-primary); }
+        .header-controls { display: flex; gap: 0.5em; }
+        .control-btn { background: none; border: none; font-size: 1.2em; cursor: pointer; color: var(--icon-color); padding: 5px; }
+        #chat-log { flex-grow: 1; padding: 10px 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .message { max-width: 85%; padding: 10px 15px; border-radius: 12px; line-height: 1.6; color: var(--text-primary);
+                    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); word-wrap: break-word; }
+        .user { background: var(--user-bubble-bg); align-self: flex-end; border-bottom-right-radius: 3px; }
+        html[dir="rtl"] .user { align-self: flex-start; border-bottom-right-radius: 12px; border-bottom-left-radius: 3px; }
+        .bot { background: var(--bot-bubble-bg); align-self: flex-start; border-bottom-left-radius: 3px; }
+        html[dir="rtl"] .bot { align-self: flex-end; border-bottom-left-radius: 12px; border-bottom-right-radius: 3px; }
+        #input-bar { display: flex; padding: 12px; background: var(--footer-bg-color); flex-shrink: 0; align-items: center; }
+        #msg-input { flex-grow: 1; background: var(--bot-bubble-bg); border: 1px solid var(--border-color);
+                        border-radius: 22px; padding: 12px 18px; font-size: 15px; color: var(--text-primary);
+                        outline: none; transition: border-color 0.2s; }
+        #send-btn { background: var(--accent-green); color: white; border: none; border-radius: 50%; width: 45px;
+                    height: 45px; margin: 0 12px; cursor: pointer; font-size: 18px; display: flex;
+                    align-items: center; justify-content: center; transition: transform 0.2s, background-color 0.2s; }
+        html[dir="ltr"] #send-btn { order: 2; }
+        .message.bot pre { background-color: rgba(0,0,0,0.2); border-radius: 8px; padding: 1em; margin: 0.5em 0; 
+                           white-space: pre-wrap; direction: ltr; text-align: left; position: relative; }
+        .copy-btn { position: absolute; top: 8px; right: 8px; background: #555; color: white;
+                    border: none; padding: 5px 8px; border-radius: 5px; cursor: pointer;
+                    opacity: 0; transition: opacity 0.2s; font-size: 12px; }
+        html[dir="rtl"] .copy-btn { right: auto; left: 8px; }
+        .message.bot pre:hover .copy-btn { opacity: 1; }
+    </style>
+</head>
+<body>
+    <div class="chat-window">
+        <div class="chat-header">
+            <div class="header-title"><i class="fa-solid fa-robot"></i><h2 id="ui-title"></h2></div>
+            <div class="header-controls">
+                <button id="new-chat-btn" class="control-btn"><i class="fa-solid fa-plus"></i></button>
+                <button id="theme-toggle" class="control-btn"></button>
+                <button id="lang-toggle" class="control-btn"></button>
+            </div>
+        </div>
+        <div id="chat-log"></div>
+        <div id="input-bar">
+            <input type="text" id="msg-input"><button id="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script>
+        // === JavaScript v2.4 with Corrected Regex ===
+        let currentTheme, currentLang;
+        const uiStrings = {
+            en: { title: "Gemini Bot", placeholder: "Ask Gemini anything...", newChat: "New Chat", copy: "Copy", copied: "Copied!" },
+            ar: { title: "بوت Gemini", placeholder: "اسأل Gemini أي شيء...", newChat: "محادثة جديدة", copy: "نسخ", copied: "تم النسخ!" }
+        };
+
+        function parseMarkdown(text) {
+            let html = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            
+            // *** التعابير النمطية الصحيحة هنا ***
+            html = html.replace(/```([\s\S]*?)```/g, (match, code) => {
+                const safeCode = code.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+                return '<pre><button class="copy-btn">' + uiStrings[currentLang].copy + '</button><code>' + safeCode.trim() + '</code></pre>';
+            });
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            html = html.replace(/^\s*[-*]\s+(.*)/gm, '<ul><li>$1</li></ul>');
+            html = html.replace(/<\/ul>\s*<ul>/g, '');
+            html = html.replace(/\n(?!<\/?(pre|code|ul|li|strong|em)>)/g, '<br>');
+
+            return html;
+        }
+        
+        function addMessage(text, sender) {
+            const log = document.getElementById('chat-log');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message ' + sender;
+            msgDiv.innerHTML = (sender === 'bot') ? parseMarkdown(text) : text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            log.appendChild(msgDiv);
+            log.scrollTop = log.scrollHeight;
+            msgDiv.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const code = btn.nextElementSibling.textContent;
+                    navigator.clipboard.writeText(code);
+                    btn.textContent = uiStrings[currentLang].copied;
+                    setTimeout(() => { btn.textContent = uiStrings[currentLang].copy; }, 2000);
+                };
+            });
+        }
+        async function sendMessage() {
+            const input = document.getElementById('msg-input');
+            const text = input.value.trim();
+            
+            if (text) {
+                addMessage(text, 'user'); input.value = '';
+                const botReply = await window.sendMessageToAI(text, currentLang);
+                addMessage(botReply, 'bot');
+            }
+        }
+        async function startNewChat() {
+            await window.clearChatHistory(); document.getElementById('chat-log').innerHTML = '';
+        }
+        function setTheme(theme) {
+            currentTheme = theme;
+            document.documentElement.setAttribute('data-theme', theme);
+            document.getElementById('theme-toggle').innerHTML = theme === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+        }
+        function setLanguage(lang) {
+            currentLang = lang;
+            const strings = uiStrings[lang];
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('ui-title').textContent = strings.title;
+            document.getElementById('msg-input').placeholder = strings.placeholder;
+            document.getElementById('new-chat-btn').title = strings.newChat;
+            document.getElementById('lang-toggle').textContent = lang === 'en' ? 'AR' : 'EN';
+        }
+        window.onload = async () => {
+            const initialState = await window.getInitialState();
+            setTheme(initialState.settings.theme);
+            setLanguage(initialState.settings.language);
+            const log = document.getElementById('chat-log');
+            log.innerHTML = '';
+            if (initialState.history && Array.isArray(initialState.history)) {
+                initialState.history.forEach(item => {
+                    if (item && item.role && item.parts && Array.isArray(item.parts) && item.parts.length > 0 && item.parts[0].text) {
+                        const sender = item.role === 'user' ? 'user' : 'bot';
+                        addMessage(item.parts[0].text, sender);
+                    }
+                });
+            } 
+            document.getElementById('new-chat-btn').addEventListener('click', startNewChat);
+            document.getElementById('theme-toggle').addEventListener('click', () => {
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                setTheme(newTheme); window.saveSettings(newTheme, currentLang);
+            });
+            document.getElementById('lang-toggle').addEventListener('click', () => {
+                const newLang = currentLang === 'en' ? 'ar' : 'en';
+                setLanguage(newLang); log.innerHTML = ''; window.saveSettings(currentTheme, newLang);
+            });
+            document.getElementById('send-btn').addEventListener('click', sendMessage);
+            document.getElementById('msg-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        };
+    </script>
+</body>
+</html>

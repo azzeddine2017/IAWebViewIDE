@@ -63,31 +63,50 @@ async function createNewFile() {
             console.log('Ring function createNewFile found');
             const result = await window.createNewFile(JSON.stringify(params));
             console.log('Create file result:', result);
+            console.log('Result type:', typeof result);
 
-            if (result && result.success) {
-                updateStatus('تم إنشاء الملف: ' + fileName);
+            // تحسين معالجة الاستجابة
+            let parsedResult = result;
+            if (typeof result === 'string') {
+                try {
+                    parsedResult = JSON.parse(result);
+                } catch (e) {
+                    console.log('Result is not JSON, treating as plain response');
+                }
+            }
+
+            if (parsedResult && (parsedResult.success === true || parsedResult.success === "true")) {
+                updateStatus('✅ تم إنشاء الملف: ' + fileName);
                 document.getElementById('fileName').value = '';
 
                 // Add to file list UI directly instead of calling updateFileList
                 addFileToList(fileName, true);
                 console.log('File created successfully');
-            } else if (result && result.error) {
-                updateStatus('خطأ في إنشاء الملف: ' + result.error);
-                console.error('Ring error:', result.error);
+
+                // إضافة رسالة في الشات
+                addMessage('system', 'نجح العمل:', 'تم إنشاء الملف ' + fileName + ' بنجاح');
+
+            } else if (parsedResult && parsedResult.error) {
+                updateStatus('❌ خطأ في إنشاء الملف: ' + parsedResult.error);
+                console.error('Ring error:', parsedResult.error);
+                addMessage('system', 'خطأ:', parsedResult.error);
             } else {
-                updateStatus('خطأ في إنشاء الملف: استجابة غير متوقعة');
-                console.error('Unexpected result:', result);
+                updateStatus('⚠️ استجابة غير متوقعة من الخادم');
+                console.error('Unexpected result:', parsedResult);
+                addMessage('system', 'تحذير:', 'استجابة غير متوقعة: ' + JSON.stringify(parsedResult));
             }
         } else {
             console.error('Ring function createNewFile not found');
             console.log('Available window functions:', Object.keys(window).filter(key => typeof window[key] === 'function'));
-            updateStatus('خطأ: وظيفة إنشاء الملف غير متوفرة');
+            updateStatus('❌ خطأ: وظيفة إنشاء الملف غير متوفرة');
+            addMessage('system', 'خطأ:', 'وظيفة إنشاء الملف غير متوفرة في النظام');
             return;
         }
 
     } catch (error) {
         console.error('Error creating file:', error);
-        updateStatus('فشل في إنشاء الملف: ' + error.message);
+        updateStatus('❌ فشل في إنشاء الملف: ' + error.message);
+        addMessage('system', 'خطأ:', 'فشل في إنشاء الملف: ' + error.message);
     } finally {
         showLoading(false);
     }
@@ -257,11 +276,27 @@ async function createProject() {
         showLoading(true);
         
         const params = [projectName];
-        const result = await window.createProject(JSON.stringify(params));
-        console.log('Create project result:', result);
-        
-        updateStatus('تم إنشاء المشروع: ' + projectName);
-        document.getElementById('projectName').value = '';
+        console.log('Calling createProject with params:', params);
+
+        if (typeof window.createProject === 'function') {
+            const result = await window.createProject(JSON.stringify(params));
+            console.log('Create project result:', result);
+
+            if (result && result.success) {
+                updateStatus('✓ تم إنشاء المشروع: ' + projectName);
+                document.getElementById('projectName').value = '';
+                console.log('Project created successfully:', result);
+            } else if (result && result.error) {
+                updateStatus('✗ خطأ: ' + result.error);
+                console.error('Project creation error:', result.error);
+            } else {
+                updateStatus('✗ استجابة غير متوقعة من الخادم');
+                console.error('Unexpected result:', result);
+            }
+        } else {
+            updateStatus('✗ دالة إنشاء المشروع غير متاحة');
+            console.error('createProject function not found');
+        }
         
     } catch (error) {
         console.error('Error creating project:', error);
@@ -273,17 +308,37 @@ async function createProject() {
 
 async function openProject() {
     try {
-        updateStatus('جاري فتح المشروع...');
+        updateStatus('جاري البحث عن المشاريع...');
         showLoading(true);
-        
-        const result = await window.openProject(JSON.stringify([]));
-        console.log('Open project result:', result);
-        
-        updateStatus('تم فتح المشروع');
-        
+
+        console.log('Calling openProject...');
+
+        if (typeof window.openProject === 'function') {
+            const result = await window.openProject(JSON.stringify([]));
+            console.log('Open project result:', result);
+
+            if (result && result.success) {
+                if (result.projects && result.projects.length > 0) {
+                    updateStatus('✓ تم العثور على ' + result.projects.length + ' مشروع: ' + result.projects.join(', '));
+                    console.log('Available projects:', result.projects);
+                } else {
+                    updateStatus('✓ ' + result.message);
+                }
+            } else if (result && result.error) {
+                updateStatus('✗ خطأ: ' + result.error);
+                console.error('Open project error:', result.error);
+            } else {
+                updateStatus('✗ استجابة غير متوقعة من الخادم');
+                console.error('Unexpected result:', result);
+            }
+        } else {
+            updateStatus('✗ دالة فتح المشروع غير متاحة');
+            console.error('openProject function not found');
+        }
+
     } catch (error) {
         console.error('Error opening project:', error);
-        updateStatus('فشل في فتح المشروع');
+        updateStatus('✗ فشل في فتح المشروع: ' + error.message);
     } finally {
         showLoading(false);
     }
@@ -293,15 +348,31 @@ async function saveProject() {
     try {
         updateStatus('جاري حفظ المشروع...');
         showLoading(true);
-        
-        const result = await window.saveProject(JSON.stringify([]));
-        console.log('Save project result:', result);
-        
-        updateStatus('تم حفظ المشروع');
-        
+
+        console.log('Calling saveProject...');
+
+        if (typeof window.saveProject === 'function') {
+            const result = await window.saveProject(JSON.stringify([]));
+            console.log('Save project result:', result);
+
+            if (result && result.success) {
+                updateStatus('✓ ' + result.message);
+                console.log('Project saved successfully');
+            } else if (result && result.error) {
+                updateStatus('✗ خطأ: ' + result.error);
+                console.error('Save project error:', result.error);
+            } else {
+                updateStatus('✗ استجابة غير متوقعة من الخادم');
+                console.error('Unexpected result:', result);
+            }
+        } else {
+            updateStatus('✗ دالة حفظ المشروع غير متاحة');
+            console.error('saveProject function not found');
+        }
+
     } catch (error) {
         console.error('Error saving project:', error);
-        updateStatus('فشل في حفظ المشروع');
+        updateStatus('✗ فشل في حفظ المشروع: ' + error.message);
     } finally {
         showLoading(false);
     }
@@ -312,7 +383,7 @@ async function runCode() {
     try {
         updateStatus('جاري تشغيل الكود...');
         showLoading(true);
-        
+
         const code = editor.getValue();
         console.log('Running code:', code.substring(0, 100) + '...');
 
@@ -321,27 +392,39 @@ async function runCode() {
             console.log('Sending code parameters:', params);
             const result = await window.runCode(JSON.stringify(params));
             console.log('Run code result:', result);
+            console.log('Result type:', typeof result);
 
-            if (result && result.output) {
-                updateStatus('تم تشغيل الكود بنجاح');
-                addMessage('system', 'نتيجة التشغيل:', result.output);
-            } else if (result && result.error) {
-                updateStatus('خطأ في تشغيل الكود: ' + result.error);
-                addMessage('system', 'خطأ في التشغيل:', result.error);
+            // تحسين معالجة الاستجابة
+            let parsedResult = result;
+            if (typeof result === 'string') {
+                try {
+                    parsedResult = JSON.parse(result);
+                } catch (e) {
+                    console.log('Result is not JSON, treating as plain response');
+                }
+            }
+
+            if (parsedResult && (parsedResult.success === true || parsedResult.output)) {
+                updateStatus('✅ تم تشغيل الكود بنجاح');
+                const output = parsedResult.output || 'تم تشغيل الكود بنجاح';
+                addMessage('system', '🎯 نتيجة التشغيل:', output);
+            } else if (parsedResult && parsedResult.error) {
+                updateStatus('❌ خطأ في تشغيل الكود: ' + parsedResult.error);
+                addMessage('system', '❌ خطأ في التشغيل:', parsedResult.error);
             } else {
-                updateStatus('تم تشغيل الكود - لا توجد نتيجة');
-                addMessage('system', 'تم التشغيل', 'تم تشغيل الكود بنجاح');
+                updateStatus('⚠️ تم تشغيل الكود - استجابة غير متوقعة');
+                addMessage('system', '⚠️ تم التشغيل', 'تم تشغيل الكود لكن الاستجابة غير واضحة: ' + JSON.stringify(parsedResult));
             }
         } else {
             console.error('Ring function runCode not found');
-            updateStatus('خطأ: وظيفة تشغيل الكود غير متوفرة');
-            addMessage('system', 'خطأ', 'وظيفة تشغيل الكود غير متوفرة');
+            updateStatus('❌ خطأ: وظيفة تشغيل الكود غير متوفرة');
+            addMessage('system', '❌ خطأ', 'وظيفة تشغيل الكود غير متوفرة في النظام');
         }
-        
+
     } catch (error) {
         console.error('Error running code:', error);
-        updateStatus('خطأ في تشغيل الكود');
-        addMessage('system', 'خطأ في التشغيل:', error.message || 'خطأ غير معروف');
+        updateStatus('❌ خطأ في تشغيل الكود');
+        addMessage('system', '❌ خطأ في التشغيل:', error.message || 'خطأ غير معروف');
     } finally {
         showLoading(false);
     }
@@ -394,31 +477,56 @@ async function formatCode() {
 async function sendMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
-    
+
     if (!message) return;
 
     // Add user message to chat
-    addMessage('user', 'أنت:', message);
+    addMessage('user', '👤 أنت:', message);
     input.value = '';
 
     try {
         updateStatus('جاري إرسال الرسالة للذكاء الاصطناعي...');
         showLoading(true);
-        
-        const params = [message, editor.getValue()];
-        const result = await window.sendAIRequest(JSON.stringify(params));
-        console.log('AI request result:', result);
-        
-        if (result && result.response) {
-            addMessage('ai', 'المساعد الذكي:', result.response);
+
+        // Check if AI function exists
+        if (typeof window.sendAIRequest === 'function') {
+            const params = [message, editor.getValue()];
+            console.log('Sending AI request with params:', params);
+            const result = await window.sendAIRequest(JSON.stringify(params));
+            console.log('AI request result:', result);
+            console.log('Result type:', typeof result);
+
+            // تحسين معالجة الاستجابة
+            let parsedResult = result;
+            if (typeof result === 'string') {
+                try {
+                    parsedResult = JSON.parse(result);
+                } catch (e) {
+                    console.log('AI result is not JSON, treating as plain response');
+                }
+            }
+
+            if (parsedResult && parsedResult.response) {
+                const aiIcon = parsedResult.demo_mode ? '🤖 (وضع تجريبي)' : '🤖 المساعد الذكي:';
+                addMessage('ai', aiIcon, parsedResult.response);
+                updateStatus('✅ تم استلام رد الذكاء الاصطناعي');
+            } else if (parsedResult && parsedResult.error) {
+                addMessage('ai', '❌ خطأ:', parsedResult.error);
+                updateStatus('❌ خطأ في الذكاء الاصطناعي: ' + parsedResult.error);
+            } else {
+                addMessage('ai', '⚠️ استجابة غير متوقعة:', JSON.stringify(parsedResult));
+                updateStatus('⚠️ استجابة غير متوقعة من الذكاء الاصطناعي');
+            }
+        } else {
+            console.error('AI function sendAIRequest not found');
+            addMessage('ai', '❌ خطأ:', 'وظيفة الذكاء الاصطناعي غير متوفرة في النظام');
+            updateStatus('❌ وظيفة الذكاء الاصطناعي غير متوفرة');
         }
-        
-        updateStatus('تم إرسال الرسالة');
-        
+
     } catch (error) {
         console.error('Error sending message:', error);
-        addMessage('ai', 'خطأ:', 'عذراً، حدث خطأ في الاتصال بالذكاء الاصطناعي');
-        updateStatus('فشل في إرسال الرسالة');
+        addMessage('ai', '❌ خطأ:', 'عذراً، حدث خطأ في الاتصال بالذكاء الاصطناعي: ' + error.message);
+        updateStatus('❌ فشل في إرسال الرسالة');
     } finally {
         showLoading(false);
     }

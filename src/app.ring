@@ -1,16 +1,15 @@
 # ===================================================================
 # Ring IDE Application Class
 # ===================================================================
-
-
 load "jsonlib.ring"
 load "stdlib.ring"
 load "smart_agent.ring"
-load "ui_generator.ring"
+//load "ui_generator.ring"
 load "file_manager.ring"
 load "code_runner.ring"
 load "webview_method_wrapper.ring"
-
+  # إنشاء قائمة شاملة لجميع الربطات
+        aAllBindings = []
 # ===================================================================
 # Main Application Class
 # ===================================================================
@@ -19,7 +18,7 @@ class RingIDE
     # Public properties
     oWebView = NULL
     oSmartAgent = NULL
-    oUIGenerator = NULL
+    //oUIGenerator = NULL
     oFileManager = NULL
     oCodeRunner = NULL
     cCurrentProject = ""
@@ -34,12 +33,12 @@ class RingIDE
 
         # Initialize components
         oSmartAgent = new SmartAgent()
-        oUIGenerator = new UIGenerator()
+        //oUIGenerator = new UIGenerator()
         oFileManager = new FileManager()
         oCodeRunner = new CodeRunner()
 
         # Initialize method binder
-        oMethodBinder = new WebViewMethodBinder
+        //oMethodBinder = new WebViewMethodBinder
 
         see "All components initialized successfully." + nl
     
@@ -81,7 +80,7 @@ class RingIDE
 	            cHtmlPath = "file://" + currentdir() + "/assets/html/new_index.html"
 	            see "Loading HTML interface: " + cHtmlPath + nl
 	            navigate(cHtmlPath)
-                
+
                 # Start the application
                 run()
             }
@@ -89,7 +88,4 @@ class RingIDE
         catch
             see "Error starting application: " + cCatchError + nl
         done
-    
-    
-    # All functions have been migrated to the new method-based system
     # ===================================================================
